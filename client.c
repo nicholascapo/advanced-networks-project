@@ -4,7 +4,7 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: client.c
  * Purpose: 
- * Usage: 
+ * Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>
  *
  * Limitations: 
  * Development Computer: x86
