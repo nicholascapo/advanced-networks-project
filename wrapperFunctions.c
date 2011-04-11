@@ -66,7 +66,10 @@ void SigAction(int signum, Sigfunc* handler) {
 
     act.sa_flags = 0;
     if (signum == SIGALRM) {
+    	//Cygwin compatibility
+    	#ifdef SA_INTERRUPT
         act.sa_flags |= SA_INTERRUPT;
+        #endif
     } else {
         act.sa_flags |= SA_RESTART;
     }//END if/else
