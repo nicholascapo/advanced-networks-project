@@ -126,7 +126,7 @@ printf("Enter a command (0-3):\n");
 //#############################################################################
 char readInput(int requester){
 	char buffer[MAX_LINE_LENGTH];
-	scanf ("%s", &buffer);
+	scanf ("%s", buffer);
 	
 	if(requester == 1){
 		return buffer[0];
