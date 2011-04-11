@@ -98,7 +98,7 @@ while(1){
 			
 		break;
 		case '3':
-			close(socketfd);
+			Close(socketfd);
 			exit(1);
 		break;
 		default:
