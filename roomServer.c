@@ -4,7 +4,7 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: roomServer.c
  * Purpose: 
- * Usage: roomServer.exe <port> <max connected clients> <welcome message>
+ * Usage: Usage: roomServer.exe <port> <registration server IP> <registration server port> <max connected clients> <welcome message>
  *
  * Limitations: 
  * Development Computer: x86
@@ -28,7 +28,7 @@ void usage();
 
 int main(int argc, char* argv[]) {
 
-    if (argc != 4) {
+    if (argc != 6) {
         usage();
         exit(1);
     }
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 //  #######################################################
 
 void usage() {
-    printf("Usage: roomServer.exe <port> <max connected clients> <welcome message>\n");
+    printf("Usage: roomServer.exe <port> <registration server IP> <registration server port> <max connected clients> <welcome message>\n");
 }
 
 //  #######################################################
