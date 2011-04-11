@@ -4,7 +4,7 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: roomServer.c
  * Purpose: 
- * Usage: 
+ * Usage: roomServer.exe <port> <max connected clients> <welcome message>
  *
  * Limitations: 
  * Development Computer: x86
@@ -13,7 +13,7 @@
  * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
  * Operational Status: 
  **/
- 
+
 //INCLUDES ##########################################################
 #include "protocols.h"
 #include "wrapperFunctions.c"
@@ -23,11 +23,23 @@
 // GLOBALS ##########################################################
 
 // PROTOTYPES #######################################################
-
+void usage();
 // MAIN #######################################################
 
-int main(int argc, char* argv[]){
-return 0;
+int main(int argc, char* argv[]) {
+
+    if (argc != 4) {
+        usage();
+        exit(1);
+    }
+
+    return 0;
+}
+
+//  #######################################################
+
+void usage() {
+    printf("Usage: roomServer.exe <port> <max connected clients> <welcome message>\n");
 }
 
 //  #######################################################
