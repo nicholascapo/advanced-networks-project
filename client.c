@@ -70,15 +70,14 @@ return 0;
 }//end main
 
 //#############################################################################
-// Checks ARGC for correct number of arguments, prints error otherwise
+// Checks ARGC for correct number of arguments, prints usage otherwise
 //#############################################################################
 void checkArgc(int argc){
-if (argc != 3)
-   {
+if (argc != 4){
    fprintf(stderr, "Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>");
    exit(1);
    } // End if        
-}
+}//end checkArgc()
 
 //#############################################################################
 //Prints menu and performs action
@@ -105,12 +104,11 @@ while(1){
 		default:
 			printf("Unrecognized Command\n");
 		break;
-	}
+	}//end switch
 	//Null
 	character = '\0';
-}
-
-}
+}//end while
+}//end runmenu()
 
 //#############################################################################
 //Prints the intial menu
@@ -121,7 +119,7 @@ printf("* This is a stub for the menu\n");
 printf("* 3 - Exit Program\n");
 printf("****************************************\n\n");
 printf("Enter a command (0-3):\n");
-}
+}//end printmenu()
 
 //#############################################################################
 //Reads from the command line, if requester == 1 then return a single character
@@ -132,9 +130,9 @@ char readInput(int requester){
 	
 	if(requester == 1){
 		return buffer[0];
-	}
+	}//end if
 	return *buffer;
-}
+}//end readinput()
 
 //#############################################################################
 //Makes connection and returns the socket file descriptor
@@ -149,10 +147,10 @@ if(connectTCP == 1){
 	if (status != 0){
 		printf("Unable to connect server, exiting.");
 		exit(1);
-	}
+	}//end if
 }else{
 	//UDP Setup
 	socketfd = Socket(AF_INET,SOCK_DGRAM,0);
-}
+}//end if
 return socketfd;
-}
+}//end makeconnection
