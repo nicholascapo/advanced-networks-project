@@ -74,7 +74,7 @@ return 0;
 //#############################################################################
 void checkArgc(int argc){
 if (argc != 4){
-   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>");
+   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>\n");
    exit(1);
    } // End if        
 }//end checkArgc()
