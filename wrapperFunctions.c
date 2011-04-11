@@ -51,6 +51,7 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 ssize_t Read(int fd, void *buf, size_t count);
 ssize_t Write(int fd, const void *buf, size_t count);
 void Close(int connfd);
+void displayConnectionInfo(int socket);
 
 //##############################################################
 
@@ -66,10 +67,10 @@ void SigAction(int signum, Sigfunc* handler) {
 
     act.sa_flags = 0;
     if (signum == SIGALRM) {
-    	//Cygwin compatibility
-    	#ifdef SA_INTERRUPT
+        //Cygwin compatibility
+#ifdef SA_INTERRUPT
         act.sa_flags |= SA_INTERRUPT;
-        #endif
+#endif
     } else {
         act.sa_flags |= SA_RESTART;
     }//END if/else
@@ -309,5 +310,32 @@ void debug(char * message) {
         printf("DEBUG: %s\n", message);
     }//END if
 }//END debug();
+
+//##############################################################
+
+void displayConnectionInfo(int socket) {
+    struct sockaddr_in sa;
+    socklen_t len;
+    int status;
+
+    len = sizeof (sa);
+
+    status = getsockname(socket, (struct sockaddr *) &sa, &len);
+    if (status < 0) {
+        perror("Get Sock Name Error\n");
+        exit(1);
+    }//END if
+
+    printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+
+    status = getpeername(socket, (struct sockaddr *) &sa, &len);
+    if (status < 0) {
+        perror("Get Peer Name Error\n");
+        exit(1);
+    }//END if
+
+    printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+
+}//END displayConnectionInfo()
 
 //##############################################################
