@@ -19,15 +19,140 @@
 #include "wrapperFunctions.c"
 
 // CONSTANTS ########################################################
-
+#define	MAX_LINE_LENGTH	256	      // max text line length 
+#define	SA struct sockaddr
 // GLOBALS ##########################################################
 
 // PROTOTYPES #######################################################
+void checkArgc(int argc);
+char readInput(int requester);
+void runMenu(int socketfd);
+void printMenu();
+int makeConnection(int conenctTCP,struct sockaddr_in serverAddress);
 
 // MAIN #######################################################
 
 int main(int argc, char* argv[]){
-return 0;
+
+//Local Variables
+int socketfd;
+struct sockaddr_in serverAddress;
+unsigned short port;
+int connectTCP;
+int status;
+//Check Argc for correct requirements
+checkArgc(argc);
+
+//Setup Connection Specs
+port = atoi(argv[2]);
+connectTCP = atoi(argv[3]);
+bzero(&serverAddress, sizeof(serverAddress));
+
+
+//Setup Server Address
+serverAddress.sin_family = AF_INET;
+serverAddress.sin_port   = htons(port);
+status = inet_pton(AF_INET, argv[1], &serverAddress.sin_addr);
+if (status != 1){
+	printf("Unable to resolve server IP");
+	exit(1);
 }
 
-//  #######################################################
+//make connection
+socketfd = makeConnection(connectTCP, serverAddress);
+
+//Run infinite loop menu
+runMenu(socketfd);	
+
+//should bever reach here...as exit(1); should occur
+return 0;
+
+}//end main
+
+//#############################################################################
+// Checks ARGC for correct number of arguments, prints error otherwise
+//#############################################################################
+void checkArgc(int argc){
+if (argc != 3)
+   {
+   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>");
+   exit(1);
+   } // End if        
+}
+
+//#############################################################################
+//Prints menu and performs action
+//#############################################################################
+void runMenu(int socketfd){
+char character;
+while(1){
+	printMenu();
+	character = readInput(1);
+	switch (character){
+		case '0':
+			
+		break;
+		case '1':
+			
+		break;
+		case '2':
+			
+		break;
+		case '3':
+			close(socketfd);
+			exit(1);
+		break;
+		default:
+			printf("Unrecognized Command\n");
+		break;
+	}
+	//Null
+	character = '\0';
+}
+
+}
+
+//#############################################################################
+//Prints the intial menu
+//#############################################################################
+void printMenu(){
+printf("****************************************\n");
+printf("* This is a stub for the menu\n");
+printf("* 3 - Exit Program\n");
+printf("****************************************\n\n");
+printf("Enter a command (0-3):\n");
+}
+
+//#############################################################################
+//Reads from the command line, if requester == 1 then return a single character
+//#############################################################################
+char readInput(int requester){
+	char buffer[MAX_LINE_LENGTH];
+	scanf ("%s", &buffer);
+	
+	if(requester == 1){
+		return buffer[0];
+	}
+	return *buffer;
+}
+
+//#############################################################################
+//Makes connection and returns the socket file descriptor
+//#############################################################################
+int makeConnection(int connectTCP, struct sockaddr_in serverAddress){
+int socketfd;
+int status;
+if(connectTCP == 1){ 
+	//TCP Setup
+	socketfd = Socket(AF_INET,SOCK_STREAM,0);
+	status = connect(socketfd, (SA *) &serverAddress, sizeof(serverAddress));
+	if (status != 0){
+		printf("Unable to connect server, exiting.");
+		exit(1);
+	}
+}else{
+	//UDP Setup
+	socketfd = Socket(AF_INET,SOCK_DGRAM,0);
+}
+return socketfd;
+}
