@@ -20,26 +20,193 @@
 
 // CONSTANTS ########################################################
 
+#define LISTENQ 100
+#define MAX_ROOMS 100
+
 // GLOBALS ##########################################################
 
+RoomRecord* roomList[MAX_ROOMS];
+
 // PROTOTYPES #######################################################
+
 void usage();
+void processConnection(int connfd);
+void sendRoomList(int connfd);
+void registerRoom(int connfd, RoomRecord room);
+void deregisterRoom(int connfd, RoomRecord room);
+int findEmptyIndex();
+
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
 
+    int listenfd;
+    int reuseaddr_value = 1;
+    int port;
+
     if (argc != 2) {
         usage();
         exit(1);
-    }
+    }//END if
+
+    port = atoi(argv[1]);
+
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    //Set Reuse Address to True
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr_value, sizeof (reuseaddr_value));
+
+    struct sockaddr_in serveraddr;
+
+    //zero the struct
+    memset(&serveraddr, 0, sizeof (serveraddr));
+    serveraddr.sin_family = AF_INET;
+    serveraddr.sin_port = htons(port);
+    serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    Bind(listenfd, (struct sockaddr *) &serveraddr, sizeof (serveraddr));
+
+    Listen(listenfd, LISTENQ);
+
+    printf("READY TO ACCEPT CLIENT CONNECTIONS\n");
+
+    //this while is for all clients
+    while (TRUE) {
+        int connfd;
+        int pid;
+
+        connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
+
+        pid = Fork();
+        if (pid == 0) {
+            printf("Child process #%d has accepted a TCP connection\n", getpid());
+
+            Close(listenfd);
+
+            displayConnectionInfo(connfd);
+
+            processConnection(connfd);
+
+            Close(connfd);
+
+            exit(0);
+        } else {
+            //PARENT
+            Close(connfd);
+        }//END if/else
+
+    }//END while
 
     return 0;
-}
+}//END main()
 
 //  #######################################################
 
 void usage() {
     printf("Usage: registrationServer.exe <port>\n");
-}
+}//END usage()
 
 //  #######################################################
+//  Reads and preforms the action requested by request.type
+//  #######################################################
+
+void processConnection(int connfd) {
+    RegistrationMessage request;
+
+    Read(connfd, &request, sizeof (request));
+
+    if (request.type == ROOM_QUERY) {
+        sendRoomList(connfd);
+    } else if (request.type == REGISTER_REQUEST) {
+        registerRoom(connfd, request.record);
+    } else if (request.type == REGISTER_LEAVE) {
+        deregisterRoom(connfd, request.record);
+    } else {
+        printf("ERROR: Command not Recognized: %d", request.type);
+    }//END if/else
+
+}//END processConnection()
+
+//  #######################################################
+// Sends the room list in reverse order to connfd. Room ID's are set to their index
+// Client should detect last room by ID == 0
+//  #######################################################
+
+void sendRoomList(int connfd) {
+    int index;
+    for (index = MAX_ROOMS; index > -1; index--) {
+        if (roomList[index] == NULL) {
+            continue;
+        } else {
+            roomList[index]->ID = index;
+            Write(connfd, &roomList[index], sizeof (roomList[index]));
+        }//END if
+    }//END for
+
+}//END sendRoomList()
+
+//  #######################################################
+//  Adds the new Room to the first empty index in roomList, and responds to roomServer with sucess or failure
+//  #######################################################
+//  Adds the specified room to the roomList in the first available index
+//  Send RegistrationMessge with type set to sucess or failue appropriately
+//  #######################################################
+
+void registerRoom(int connfd, RoomRecord room) {
+    RegistrationMessage message;
+    int index = findEmptyIndex();
+
+    memset(&message, 0, sizeof (message));
+
+    if (index < 0) {
+        printf("ERROR: Could not allocate space for new Room: Registration Refused!");
+        message.type = REGISTER_FAILURE;
+    } else {
+        printf("Adding Room: %s", room.name);
+        roomList[index] = &room;
+        message.type = REGISTER_SUCESS;
+        message.record = room;
+    }//END if/else
+
+    Write(connfd, &message, sizeof (message));
+
+}//END registerRoom()
+
+//  #######################################################
+//  Removes the specified Room from roomList
+//  #######################################################
+
+void deregisterRoom(int connfd, RoomRecord room) {
+    int i;
+    int sucess = FALSE;
+
+    for (i = 0; i < MAX_ROOMS; i++) {
+        if (roomList[i]->name == room.name && roomList[i]->address == room.address) {
+            printf("Removing Room: %s, %s", roomList[i]->name, roomList[i]->address);
+            roomList[i] = NULL;
+        }//END if
+    }//END for
+
+    if (!sucess) {
+        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i]->name, roomList[i]->address);
+    }//END if
+
+}//END deregisterRoom()
+
+// #######################################################
+// Finds the first empty (NULL) index in roomList, -1 on ERROR
+// #######################################################
+
+int findEmptyIndex() {
+    int i = -1;
+    for (i = 0; i < MAX_ROOMS; i++) {
+        if (roomList[i] == NULL) {
+            continue;
+        } else {
+            break;
+        }//END if
+    }//END for
+
+    return i;
+}//END findEmptyIndex()
+
