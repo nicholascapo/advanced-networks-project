@@ -35,15 +35,15 @@
 #define REGISTER_FAILURE 6
 #define ROOM_QUERY 7
 
-// Used for Registration of Room Server
-// and room lists sent to client by Registration Server
-
 typedef struct {
     int tcp;
     char name[MAX_USER_ID_LENGTH];
     char address[MAX_IPADDR_STRING_LENGTH];
     int port;
 } RoomRecord;
+
+// Used for Registration of Room Server
+// and room lists sent to client by Registration Server
 
 typedef struct {
     int type;
