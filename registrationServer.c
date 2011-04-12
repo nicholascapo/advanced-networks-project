@@ -25,6 +25,7 @@
 // GLOBALS ##########################################################
 
 RoomRecord* roomList[MAX_ROOMS];
+int roomCount = 0;
 
 // PROTOTYPES #######################################################
 
@@ -133,13 +134,8 @@ void processConnection(int connfd) {
 
 void sendRoomList(int connfd) {
     int index;
-    for (index = MAX_ROOMS; index > -1; index--) {
-        if (roomList[index] == NULL) {
-            continue;
-        } else {
-            roomList[index]->ID = index;
-            Write(connfd, &roomList[index], sizeof (roomList[index]));
-        }//END if
+    for (index = 0; index < roomCount; index++) {
+        Write(connfd, &roomList[index], sizeof (roomList[index]));
     }//END for
 
 }//END sendRoomList()
@@ -153,16 +149,16 @@ void sendRoomList(int connfd) {
 
 void registerRoom(int connfd, RoomRecord room) {
     RegistrationMessage message;
-    int index = findEmptyIndex();
 
     memset(&message, 0, sizeof (message));
 
-    if (index < 0) {
+    if (roomCount == MAX_ROOMS) {
         printf("ERROR: Could not allocate space for new Room: Registration Refused!");
         message.type = REGISTER_FAILURE;
     } else {
         printf("Adding Room: %s", room.name);
-        roomList[index] = &room;
+        roomList[roomCount] = &room;
+        roomCount++;
         message.type = REGISTER_SUCESS;
         message.record = room;
     }//END if/else
@@ -172,40 +168,29 @@ void registerRoom(int connfd, RoomRecord room) {
 }//END registerRoom()
 
 //  #######################################################
-//  Removes the specified Room from roomList
+//  Removes the specified Room from roomList, Note: This does not result in a sparse array
 //  #######################################################
 
 void deregisterRoom(int connfd, RoomRecord room) {
     int i;
     int sucess = FALSE;
+    int deleteIndex = -1;
 
     for (i = 0; i < MAX_ROOMS; i++) {
         if (roomList[i]->name == room.name && roomList[i]->address == room.address) {
-            printf("Removing Room: %s, %s", roomList[i]->name, roomList[i]->address);
-            roomList[i] = NULL;
-        }//END if
-    }//END for
-
-    if (!sucess) {
-        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i]->name, roomList[i]->address);
-    }//END if
-
-}//END deregisterRoom()
-
-// #######################################################
-// Finds the first empty (NULL) index in roomList, -1 on ERROR
-// #######################################################
-
-int findEmptyIndex() {
-    int i = -1;
-    for (i = 0; i < MAX_ROOMS; i++) {
-        if (roomList[i] == NULL) {
-            continue;
-        } else {
+            deleteIndex = i;
+            sucess = TRUE;
             break;
         }//END if
     }//END for
 
-    return i;
-}//END findEmptyIndex()
+    if (sucess) {
+        printf("Removing Room: %s, %s", roomList[deleteIndex]->name, roomList[deleteIndex]->address);
+        roomCount--;
+        roomList[deleteIndex] = roomList[roomCount];
+        roomList[roomCount] = NULL;
+    } else {
+        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i]->name, roomList[i]->address);
+    }//END if
 
+}//END deregisterRoom()
