@@ -39,7 +39,6 @@
 // and room lists sent to client by Registration Server
 
 typedef struct {
-    int ID; //Assigned by Registration Server only
     int tcp;
     char name[MAX_USER_ID_LENGTH];
     char address[MAX_IPADDR_STRING_LENGTH];

@@ -29,9 +29,9 @@ char* username;
 
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
-int getRoomChoice(RoomRecord** roomList);
+int getRoomChoice(RoomRecord** roomList, int roomCount);
 int makeConnection(int conenctTCP, char* ipAddress, int port);
-void readRoomList(int socketfd, RoomRecord** list);
+int readRoomList(int socketfd, RoomRecord** list);
 void chat(int socketfd);
 void sendStatus(int socketfd, int status);
 void userOutput(int socketfd);
@@ -43,8 +43,8 @@ int main(int argc, char* argv[]) {
 
     int socketfd;
     int port;
-    int connectTCP = TRUE;
     char* ipAddr;
+    //int roomCount;
     //RoomRecord * roomList[MAX_ROOMS];
     RoomRecord room;
 
@@ -56,15 +56,16 @@ int main(int argc, char* argv[]) {
     port = atoi(argv[2]);
     username = argv[3];
 
-    //make connection to the registration server
-    socketfd = makeConnection(connectTCP, ipAddr, port);
+    //make a TCP connection to the registration server
+    socketfd = makeConnection(TRUE, ipAddr, port);
 
-    //readRoomList(socketfd, &roomList);
+    //roomCount = readRoomList(socketfd, &roomList);
 
     Close(socketfd);
 
-    //room = roomList[getRoomChoice(roomList)];
+    //room = roomList[getRoomChoice(roomList, roomCount)];
 
+    //make a connection to the Room Server
     socketfd = makeConnection(room.tcp, room.address, room.port);
 
     chat(socketfd);
@@ -88,22 +89,21 @@ void checkArgc(int argc) {
 //displays the room list and asks the user for a room choice
 //#############################################################################
 
-int getRoomChoice(RoomRecord** roomList) {
+int getRoomChoice(RoomRecord** roomList, int roomCount) {
     int i;
     int choice;
     int validChoice = FALSE;
 
     while (!validChoice) {
-        for (i = 0; i < MAX_ROOMS; i++) {
-            if (roomList[i] != NULL) {
-                printf("%d : %s\n", roomList[i]->ID, roomList[i]->name);
-            }
+        printf("------AVAILABLE ROOMS------\n");
+        for (i = 0; i < roomCount; i++) {
+            printf("%d : %s\n", i, roomList[i]->name);
         }//END for
 
         printf("Please choose a room number:");
         scanf("%d", &choice);
 
-        if (choice < MAX_ROOMS && roomList[choice] != NULL) {
+        if (choice < roomCount && choice > -1) {
             validChoice = TRUE;
         }//END if
 
@@ -147,11 +147,15 @@ int makeConnection(int connectTCP, char* ipAddress, int port) {
 }//end makeconnection
 
 //#############################################################################
-//Reads an array of RoomRecords and returns the array
+//Reads an array of RoomRecords from the server, storing them in list
+// Returns the number of rooms read
 //#############################################################################
 
-void readRoomList(int socketfd, RoomRecord** list) {
+int readRoomList(int socketfd, RoomRecord** list) {
 
+
+
+    return 0;
 }//END getRoomList()
 
 //#############################################################################
