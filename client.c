@@ -25,17 +25,15 @@
 
 // GLOBALS ##########################################################
 
-char* username;
-
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
 int getRoomChoice(RoomRecord** roomList, int roomCount);
 int makeConnection(int conenctTCP, char* ipAddress, int port);
 int readRoomList(int socketfd, RoomRecord** list);
-void chat(int socketfd);
-void sendStatus(int socketfd, int status);
+void chat(int socketfd, char* username);
+void sendStatus(int socketfd, char* username, int status);
 void userOutput(int socketfd);
-void userInput(int socketfd);
+void userInput(int socketfd, char* username);
 
 // MAIN #######################################################
 
@@ -44,6 +42,7 @@ int main(int argc, char* argv[]) {
     int socketfd;
     int port;
     char* ipAddr;
+    char* username;
     //int roomCount;
     //RoomRecord * roomList[MAX_ROOMS];
     RoomRecord room;
@@ -68,7 +67,7 @@ int main(int argc, char* argv[]) {
     //make a connection to the Room Server
     socketfd = makeConnection(room.tcp, room.address, room.port);
 
-    chat(socketfd);
+    chat(socketfd, username);
 
     return 0;
 
@@ -162,10 +161,10 @@ int readRoomList(int socketfd, RoomRecord** list) {
 //Allows the User to interact with the chat room
 //#############################################################################
 
-void chat(int socketfd) {
+void chat(int socketfd, char* username) {
     int pid;
 
-    sendStatus(socketfd, STATUS_JOIN);
+    sendStatus(socketfd, username, STATUS_JOIN);
 
     pid = Fork();
 
@@ -175,9 +174,9 @@ void chat(int socketfd) {
     }//END if
 
     //PARENT
-    userInput(socketfd);
+    userInput(socketfd, username);
 
-    sendStatus(socketfd, STATUS_LEAVE);
+    sendStatus(socketfd, username, STATUS_LEAVE);
 
     Kill(pid, SIGTERM);
 
@@ -187,7 +186,7 @@ void chat(int socketfd) {
 //Send an empty status message
 //#############################################################################
 
-void sendStatus(int socketfd, int status) {
+void sendStatus(int socketfd, char* username, int status) {
     ChatMessage m;
 
     memset(&m, 0, sizeof (m));
@@ -217,7 +216,7 @@ void userOutput(int socketfd) {
 //Reads messages from the user and writes them to the server
 //#############################################################################
 
-void userInput(int socketfd) {
+void userInput(int socketfd, char* username) {
     ChatMessage message;
     char* text = NULL;
 
