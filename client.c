@@ -13,144 +13,219 @@
  * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
  * Operational Status: 
  **/
- 
- //INCLUDES ##########################################################
+
+//INCLUDES ##########################################################
 #include "protocols.h"
 #include "wrapperFunctions.c"
 
 // CONSTANTS ########################################################
+
 #define	MAX_LINE_LENGTH	256	      // max text line length 
 #define	SA struct sockaddr
+
 // GLOBALS ##########################################################
+
+char* username;
 
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
-char readInput(int requester);
-void runMenu(int socketfd);
-void printMenu();
-int makeConnection(int conenctTCP,struct sockaddr_in serverAddress);
+int getRoomChoice(RoomRecord** roomList);
+int makeConnection(int conenctTCP, char* ipAddress, int port);
+void readRoomList(int socketfd, RoomRecord** list);
+void chat(int socketfd);
+void sendStatus(int socketfd, int status);
+void userOutput(int socketfd);
+void userInput(int socketfd);
 
 // MAIN #######################################################
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 
-//Local Variables
-int socketfd;
-struct sockaddr_in serverAddress;
-unsigned short port;
-int connectTCP;
-int status;
-//Check Argc for correct requirements
-checkArgc(argc);
+    int socketfd;
+    int port;
+    int connectTCP = TRUE;
+    char* ipAddr;
+    //RoomRecord * roomList[MAX_ROOMS];
+    RoomRecord room;
 
-//Setup Connection Specs
-port = atoi(argv[2]);
-connectTCP = atoi(argv[3]);
-bzero(&serverAddress, sizeof(serverAddress));
+    //Check Argc for correct requirements
+    checkArgc(argc);
 
+    //Setup Connection Specs
+    ipAddr = argv[1];
+    port = atoi(argv[2]);
+    username = argv[3];
 
-//Setup Server Address
-serverAddress.sin_family = AF_INET;
-serverAddress.sin_port   = htons(port);
-status = inet_pton(AF_INET, argv[1], &serverAddress.sin_addr);
-if (status != 1){
-	printf("Unable to resolve server IP");
-	exit(1);
-}
+    //make connection to the registration server
+    socketfd = makeConnection(connectTCP, ipAddr, port);
 
-//make connection
-socketfd = makeConnection(connectTCP, serverAddress);
+    //readRoomList(socketfd, &roomList);
 
-//Run infinite loop menu
-runMenu(socketfd);	
+    Close(socketfd);
 
-//should bever reach here...as exit(1); should occur
-return 0;
+    //room = roomList[getRoomChoice(roomList)];
+
+    socketfd = makeConnection(room.tcp, room.address, room.port);
+
+    chat(socketfd);
+
+    return 0;
 
 }//end main
 
 //#############################################################################
 // Checks ARGC for correct number of arguments, prints usage otherwise
 //#############################################################################
-void checkArgc(int argc){
-if (argc != 4){
-   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <nickname>\n");
-   exit(1);
-   } // End if        
+
+void checkArgc(int argc) {
+    if (argc != 4) {
+        fprintf(stderr, "Usage: client <Server IP address> <Server Port> <nickname>\n");
+        exit(1);
+    } // End if
 }//end checkArgc()
 
 //#############################################################################
-//Prints menu and performs action
+//displays the room list and asks the user for a room choice
 //#############################################################################
-void runMenu(int socketfd){
-char character;
-while(1){
-	printMenu();
-	character = readInput(1);
-	switch (character){
-		case '0':
-			
-		break;
-		case '1':
-			
-		break;
-		case '2':
-			
-		break;
-		case '3':
-			Close(socketfd);
-			exit(1);
-		break;
-		default:
-			printf("Unrecognized Command\n");
-		break;
-	}//end switch
-	//Null
-	character = '\0';
-}//end while
-}//end runmenu()
 
-//#############################################################################
-//Prints the intial menu
-//#############################################################################
-void printMenu(){
-printf("****************************************\n");
-printf("* This is a stub for the menu\n");
-printf("* 3 - Exit Program\n");
-printf("****************************************\n\n");
-printf("Enter a command (0-3):\n");
-}//end printmenu()
+int getRoomChoice(RoomRecord** roomList) {
+    int i;
+    int choice;
+    int validChoice = FALSE;
 
-//#############################################################################
-//Reads from the command line, if requester == 1 then return a single character
-//#############################################################################
-char readInput(int requester){
-	char buffer[MAX_LINE_LENGTH];
-	scanf ("%s", buffer);
-	
-	if(requester == 1){
-		return buffer[0];
-	}//end if
-	return *buffer;
-}//end readinput()
+    while (!validChoice) {
+        for (i = 0; i < MAX_ROOMS; i++) {
+            if (roomList[i] != NULL) {
+                printf("%d : %s\n", roomList[i]->ID, roomList[i]->name);
+            }
+        }//END for
+
+        printf("Please choose a room number:");
+        scanf("%d", &choice);
+
+        if (choice < MAX_ROOMS && roomList[choice] != NULL) {
+            validChoice = TRUE;
+        }//END if
+
+    }//END while
+
+    return choice;
+}//END getRoomChoice()
+
 
 //#############################################################################
 //Makes connection and returns the socket file descriptor
 //#############################################################################
-int makeConnection(int connectTCP, struct sockaddr_in serverAddress){
-int socketfd;
-int status;
-if(connectTCP == 1){ 
-	//TCP Setup
-	socketfd = Socket(AF_INET,SOCK_STREAM,0);
-	status = connect(socketfd, (SA *) &serverAddress, sizeof(serverAddress));
-	if (status != 0){
-		printf("Unable to connect server, exiting.");
-		exit(1);
-	}//end if
-}else{
-	//UDP Setup
-	socketfd = Socket(AF_INET,SOCK_DGRAM,0);
-}//end if
-return socketfd;
+
+int makeConnection(int connectTCP, char* ipAddress, int port) {
+    int socketfd;
+    int status;
+    struct sockaddr_in serverAddress;
+
+    bzero(&serverAddress, sizeof (serverAddress));
+
+    //Setup Server Address
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(port);
+    status = inet_pton(AF_INET, ipAddress, &serverAddress.sin_addr);
+    if (status != 1) {
+        printf("Unable to resolve server IP");
+        exit(1);
+    }
+
+    if (connectTCP) {
+        //TCP Setup
+        socketfd = Socket(AF_INET, SOCK_STREAM, 0);
+    } else {
+        //UDP Setup
+        socketfd = Socket(AF_INET, SOCK_DGRAM, 0);
+    }//end if
+
+    Connect(socketfd, (SA *) & serverAddress, sizeof (serverAddress));
+
+    return socketfd;
 }//end makeconnection
+
+//#############################################################################
+//Reads an array of RoomRecords and returns the array
+//#############################################################################
+
+void readRoomList(int socketfd, RoomRecord** list) {
+
+}//END getRoomList()
+
+//#############################################################################
+//Allows the User to interact with the chat room
+//#############################################################################
+
+void chat(int socketfd) {
+    int pid;
+
+    sendStatus(socketfd, STATUS_JOIN);
+
+    pid = Fork();
+
+    if (pid == 0) {
+        //CHILD
+        userOutput(socketfd);
+    }//END if
+
+    //PARENT
+    userInput(socketfd);
+
+    sendStatus(socketfd, STATUS_LEAVE);
+
+    Kill(pid, SIGTERM);
+
+}//END chat()
+
+//#############################################################################
+//Send an empty status message
+//#############################################################################
+
+void sendStatus(int socketfd, int status) {
+    ChatMessage m;
+
+    memset(&m, 0, sizeof (m));
+
+    m.status = status;
+    strncpy(m.user, username, MAX_USER_ID_LENGTH);
+
+    Write(socketfd, &m, sizeof (m));
+
+}//END sendJoin()
+
+//#############################################################################
+//Reads messages from the socket and prints them for the user
+//#############################################################################
+
+void userOutput(int socketfd) {
+    ChatMessage message;
+
+    while (TRUE) {
+        Read(socketfd, &message, sizeof (message));
+        printf("%s : %s", message.user, message.text);
+    }//END while
+
+}//END output()
+
+//#############################################################################
+//Reads messages from the user and writes them to the server
+//#############################################################################
+
+void userInput(int socketfd) {
+    ChatMessage message;
+    char* text = NULL;
+
+    while (TRUE) {
+        strncpy(message.user, username, MAX_USER_ID_LENGTH);
+        message.status = STATUS_ONLINE;
+
+        scanf("%s", text);
+        strncpy(message.text, text, MAX_MESSAGE_TEXT);
+
+        Write(socketfd, &message, sizeof (message));
+
+    }//END while
+
+}//END input()
