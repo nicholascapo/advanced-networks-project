@@ -23,6 +23,7 @@
 #define MAX_USER_ID_LENGTH 30
 #define MAX_MESSAGE_TEXT 160
 #define MAX_IPADDR_STRING_LENGTH 15
+#define MAX_ROOMS 100
 
 #define STATUS_JOIN 0
 #define STATUS_ONLINE 1
@@ -39,8 +40,10 @@
 
 typedef struct {
     int ID; //Assigned by Registration Server only
+    int tcp;
     char name[MAX_USER_ID_LENGTH];
     char address[MAX_IPADDR_STRING_LENGTH];
+    int port;
 } RoomRecord;
 
 typedef struct {
