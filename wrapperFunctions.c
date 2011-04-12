@@ -298,12 +298,75 @@ ssize_t Read(int fd, void *buf, size_t count) {
 
 //##############################################################
 
+int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    int status;
+
+    debug("Connect");
+
+    while (TRUE) {
+        status = connect(sockfd, addr, addrlen);
+        if (errno == EINTR) {
+            continue;
+        } else if (errno == ECONNRESET) {
+            printf("Caught ECONNRESET: Trying again...\n");
+        } else {
+            break;
+        }//END if/else
+    }//END while
+
+    if (errno == EPIPE) {
+        printf("Caught EPIPE: Exiting\n");
+        cleanup();
+    } else if (errno == ETIMEDOUT) {
+        printf("Caught ETIMEDOUT: Exiting\n");
+        cleanup();
+    } else if (errno == EHOSTUNREACH) {
+        printf("Caught EHOSTUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ENETUNREACH) {
+        printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (status < 0) {
+        perror("Read Error");
+        cleanup();
+    }//END if/else
+
+    return status;
+
+}//END Read()
+
+//##############################################################
+
 void cleanup() {
     printf("ERROR: cleanup() is a stub");
     exit(1);
 }//END cleanup()
 
 //##############################################################
+
+int Kill(pid_t pid, int sig) {
+    int status;
+
+    debug("Kill");
+
+    while (TRUE) {
+        status = kill(pid, sig);
+        if (errno == EINTR) {
+            continue;
+        } else if (errno == ECONNRESET) {
+            printf("Caught ECONNRESET: Trying again...\n");
+        } else {
+            break;
+        }//END if/else
+    }//END while
+
+    if (status < 0){
+        perror("Kill Error");
+        exit(1);
+    }//END if
+
+    return status;
+}//END Kill()
 
 void debug(char * message) {
     if (DEBUG) {
