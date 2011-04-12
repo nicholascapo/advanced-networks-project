@@ -4,7 +4,7 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: client.c
  * Purpose: 
- * Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>
+ * Usage: client <Server IP address> <Server Port> <nickname>
  *
  * Limitations: 
  * Development Computer: x86
@@ -74,7 +74,7 @@ return 0;
 //#############################################################################
 void checkArgc(int argc){
 if (argc != 4){
-   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <TCP/UDP {1/0}>\n");
+   fprintf(stderr, "Usage: client <Server IP address> <Server Port> <nickname>\n");
    exit(1);
    } // End if        
 }//end checkArgc()
