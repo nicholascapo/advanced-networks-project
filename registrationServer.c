@@ -6,7 +6,7 @@
  * Purpose: 
  * Usage: registrationServer.exe <port>
  *
- * Limitations: 
+ * Limitations: The maximum number of rooms is limited at 100
  * Development Computer: x86
  * Operating System: Ubuntu Linux 10.04
  * Integrated Development Environment (IDE): Netbeans 6.9.1
@@ -21,7 +21,6 @@
 // CONSTANTS ########################################################
 
 #define LISTENQ 100
-#define MAX_ROOMS 100
 
 // GLOBALS ##########################################################
 
