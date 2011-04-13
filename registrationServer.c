@@ -30,7 +30,7 @@ int roomCount = 0;
 // PROTOTYPES #######################################################
 
 void usage();
-void processConnection(int connfd);
+void processConnections(int listenfd);
 void sendRoomList(int connfd);
 void registerRoom(int connfd, RoomRecord* room);
 void deregisterRoom(int connfd, RoomRecord* room);
@@ -70,32 +70,7 @@ int main(int argc, char* argv[]) {
 
     printf("READY TO ACCEPT CLIENT CONNECTIONS\n");
 
-    //this while is for all clients
-    while (TRUE) {
-        int connfd;
-        int pid;
-
-        connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
-
-        pid = Fork();
-        if (pid == 0) {
-            printf("Child process #%d has accepted a TCP connection\n", getpid());
-
-            Close(listenfd);
-
-            displayConnectionInfo(connfd);
-
-            processConnection(connfd);
-
-            Close(connfd);
-
-            exit(0);
-        } else {
-            //PARENT
-            Close(connfd);
-        }//END if/else
-
-    }//END while
+    processConnections(listenfd);
 
     return 0;
 }//END main()
@@ -110,20 +85,44 @@ void usage() {
 //  Reads and preforms the action requested by request.type
 //  #######################################################
 
-void processConnection(int connfd) {
+void processConnections(int listenfd) {
     RegistrationMessage request;
 
-    Read(connfd, &request, sizeof (request));
+    while (TRUE) {
+        int connfd;
+        connfd = Accept(listenfd, (struct sockaddr *) NULL, NULL);
 
-    if (request.type == ROOM_QUERY) {
-        sendRoomList(connfd);
-    } else if (request.type == REGISTER_REQUEST) {
-        registerRoom(connfd, &request.record);
-    } else if (request.type == REGISTER_LEAVE) {
-        deregisterRoom(connfd, &request.record);
-    } else {
-        printf("ERROR: Command not Recognized: %d", request.type);
-    }//END if/else
+        //can't fork here because we might need to write to the global RoomList
+        //maybe this is a bug, But I dont know how to fix it.
+        //If I were to use pThreads I would need a thread-safe Array or storage of some kind.
+        Read(connfd, &request, sizeof (request));
+
+        if (request.type == ROOM_QUERY) {
+            int pid;
+            //only fork if we need to send the room list,
+            // other operations should be almost atomic and not delay other clients
+            pid = Fork();
+            if (pid == 0) {
+                printf("Child process #%d has accepted a TCP connection\n", getpid());
+                Close(listenfd);
+                displayConnectionInfo(connfd);
+                sendRoomList(connfd);
+                Close(connfd);
+                exit(0);
+            } else {
+                //PARENT
+                Close(connfd);
+            }//END if/else
+        } else if (request.type == REGISTER_REQUEST) {
+            //can't fork here because we need to write to the global RoomList
+            registerRoom(connfd, &request.record);
+        } else if (request.type == REGISTER_LEAVE) {
+            //can't fork here because we need to write to the global RoomList
+            deregisterRoom(connfd, &request.record);
+        } else {
+            printf("ERROR: Command not Recognized: %d", request.type);
+        }//END if/else
+    }//END while
 
 }//END processConnection()
 
