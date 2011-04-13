@@ -24,7 +24,7 @@
 
 // GLOBALS ##########################################################
 
-RoomRecord* roomList[MAX_ROOMS];
+RoomRecord roomList[MAX_ROOMS];
 int roomCount = 0;
 
 // PROTOTYPES #######################################################
@@ -32,8 +32,8 @@ int roomCount = 0;
 void usage();
 void processConnection(int connfd);
 void sendRoomList(int connfd);
-void registerRoom(int connfd, RoomRecord room);
-void deregisterRoom(int connfd, RoomRecord room);
+void registerRoom(int connfd, RoomRecord* room);
+void deregisterRoom(int connfd, RoomRecord* room);
 int findEmptyIndex();
 
 // MAIN #######################################################
@@ -118,9 +118,9 @@ void processConnection(int connfd) {
     if (request.type == ROOM_QUERY) {
         sendRoomList(connfd);
     } else if (request.type == REGISTER_REQUEST) {
-        registerRoom(connfd, request.record);
+        registerRoom(connfd, &request.record);
     } else if (request.type == REGISTER_LEAVE) {
-        deregisterRoom(connfd, request.record);
+        deregisterRoom(connfd, &request.record);
     } else {
         printf("ERROR: Command not Recognized: %d", request.type);
     }//END if/else
@@ -134,9 +134,15 @@ void processConnection(int connfd) {
 
 void sendRoomList(int connfd) {
     int index;
+    RoomRecord nullRoom;
+
     for (index = 0; index < roomCount; index++) {
         Write(connfd, &roomList[index], sizeof (roomList[index]));
     }//END for
+
+    //EOF
+    memset(&nullRoom, 0, sizeof (nullRoom));
+    Write(connfd, &nullRoom, sizeof (nullRoom));
 
 }//END sendRoomList()
 
@@ -147,7 +153,7 @@ void sendRoomList(int connfd) {
 //  Send RegistrationMessge with type set to sucess or failue appropriately
 //  #######################################################
 
-void registerRoom(int connfd, RoomRecord room) {
+void registerRoom(int connfd, RoomRecord* room) {
     RegistrationMessage message;
 
     memset(&message, 0, sizeof (message));
@@ -156,11 +162,11 @@ void registerRoom(int connfd, RoomRecord room) {
         printf("ERROR: Could not allocate space for new Room: Registration Refused!");
         message.type = REGISTER_FAILURE;
     } else {
-        printf("Adding Room: %s", room.name);
-        roomList[roomCount] = &room;
+        printf("Adding Room: %s", room->name);
+        roomList[roomCount] = *room;
         roomCount++;
         message.type = REGISTER_SUCESS;
-        message.record = room;
+        message.record = *room;
     }//END if/else
 
     Write(connfd, &message, sizeof (message));
@@ -171,13 +177,13 @@ void registerRoom(int connfd, RoomRecord room) {
 //  Removes the specified Room from roomList, Note: This does not result in a sparse array
 //  #######################################################
 
-void deregisterRoom(int connfd, RoomRecord room) {
+void deregisterRoom(int connfd, RoomRecord* room) {
     int i;
     int sucess = FALSE;
     int deleteIndex = -1;
 
     for (i = 0; i < MAX_ROOMS; i++) {
-        if (roomList[i]->name == room.name && roomList[i]->address == room.address) {
+        if (roomList[i].name == room->name && roomList[i].address == room->address) {
             deleteIndex = i;
             sucess = TRUE;
             break;
@@ -185,12 +191,11 @@ void deregisterRoom(int connfd, RoomRecord room) {
     }//END for
 
     if (sucess) {
-        printf("Removing Room: %s, %s", roomList[deleteIndex]->name, roomList[deleteIndex]->address);
+        printf("Removing Room: %s, %s", roomList[deleteIndex].name, roomList[deleteIndex].address);
         roomCount--;
         roomList[deleteIndex] = roomList[roomCount];
-        roomList[roomCount] = NULL;
     } else {
-        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i]->name, roomList[i]->address);
+        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i].name, roomList[i].address);
     }//END if
 
 }//END deregisterRoom()
