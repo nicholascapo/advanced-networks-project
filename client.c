@@ -20,16 +20,13 @@
 
 // CONSTANTS ########################################################
 
-#define	MAX_LINE_LENGTH	256	      // max text line length 
-#define	SA struct sockaddr
-
 // GLOBALS ##########################################################
 
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
-int getRoomChoice(RoomRecord** roomList, int roomCount);
 int makeConnection(int conenctTCP, char* ipAddress, int port);
-int readRoomList(int socketfd, RoomRecord** list);
+int readRoomList(int socketfd, RoomRecord* list);
+int getRoomChoice(const RoomRecord* roomList, int roomCount);
 void chat(int socketfd, char* username);
 void sendStatus(int socketfd, char* username, int status);
 void userOutput(int socketfd);
@@ -43,8 +40,8 @@ int main(int argc, char* argv[]) {
     int port;
     char* ipAddr;
     char* username;
-    //int roomCount;
-    //RoomRecord * roomList[MAX_ROOMS];
+    int roomCount;
+    RoomRecord roomList[MAX_ROOMS];
     RoomRecord room;
 
     //Check Argc for correct requirements
@@ -58,11 +55,11 @@ int main(int argc, char* argv[]) {
     //make a TCP connection to the registration server
     socketfd = makeConnection(TRUE, ipAddr, port);
 
-    //roomCount = readRoomList(socketfd, &roomList);
+    roomCount = readRoomList(socketfd, roomList);
 
     Close(socketfd);
 
-    //room = roomList[getRoomChoice(roomList, roomCount)];
+    room = roomList[getRoomChoice(roomList, roomCount)];
 
     //make a connection to the Room Server
     socketfd = makeConnection(room.tcp, room.address, room.port);
@@ -83,34 +80,6 @@ void checkArgc(int argc) {
         exit(1);
     } // End if
 }//end checkArgc()
-
-//#############################################################################
-//displays the room list and asks the user for a room choice
-//#############################################################################
-
-int getRoomChoice(RoomRecord** roomList, int roomCount) {
-    int i;
-    int choice;
-    int validChoice = FALSE;
-
-    while (!validChoice) {
-        printf("------AVAILABLE ROOMS------\n");
-        for (i = 0; i < roomCount; i++) {
-            printf("%d : %s\n", i, roomList[i]->name);
-        }//END for
-
-        printf("Please choose a room number:");
-        scanf("%d", &choice);
-
-        if (choice < roomCount && choice > -1) {
-            validChoice = TRUE;
-        }//END if
-
-    }//END while
-
-    return choice;
-}//END getRoomChoice()
-
 
 //#############################################################################
 //Makes connection and returns the socket file descriptor
@@ -140,7 +109,7 @@ int makeConnection(int connectTCP, char* ipAddress, int port) {
         socketfd = Socket(AF_INET, SOCK_DGRAM, 0);
     }//end if
 
-    Connect(socketfd, (SA *) & serverAddress, sizeof (serverAddress));
+    Connect(socketfd, (struct sockaddr *) & serverAddress, sizeof (serverAddress));
 
     return socketfd;
 }//end makeconnection
@@ -150,12 +119,61 @@ int makeConnection(int connectTCP, char* ipAddress, int port) {
 // Returns the number of rooms read
 //#############################################################################
 
-int readRoomList(int socketfd, RoomRecord** list) {
+int readRoomList(int socketfd, RoomRecord* roomList) {
 
+    RoomRecord tempRoom;
+    RoomRecord nullRoom;
+    int roomCount = 0;
 
+    memset(&nullRoom, 0, sizeof (nullRoom));
 
-    return 0;
+    while (TRUE) {
+        Read(socketfd, &tempRoom, sizeof (tempRoom));
+
+        //check for EOF
+        if (tempRoom.name == nullRoom.name && tempRoom.address == nullRoom.address) {
+            break;
+        } else {
+            memcpy(&roomList[roomCount], &tempRoom, sizeof (tempRoom));
+            roomCount++;
+        }//END if/else
+
+    }//END while
+
+    if (roomCount == 0) {
+        printf("ERROR: No Servers were Found, please try again later...\n");
+        exit(1);
+    }//END if
+
+    return roomCount;
 }//END getRoomList()
+
+//#############################################################################
+//displays the room list and asks the user for a room choice
+//#############################################################################
+
+int getRoomChoice(const RoomRecord* roomList, int roomCount) {
+    int i;
+    int choice;
+    int validChoice = FALSE;
+
+    while (!validChoice) {
+        printf("------AVAILABLE ROOMS------\n");
+        for (i = 0; i < roomCount; i++) {
+            printf("%d : %s\n", i, roomList[i].name);
+        }//END for
+
+        printf("Please choose a room number:");
+        scanf("%d", &choice);
+
+        if (choice < roomCount && choice > -1) {
+            validChoice = TRUE;
+        }//END if
+
+    }//END while
+
+    return choice;
+}//END getRoomChoice()
 
 //#############################################################################
 //Allows the User to interact with the chat room
