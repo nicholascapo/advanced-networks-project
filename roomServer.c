@@ -24,6 +24,12 @@
 
 // PROTOTYPES #######################################################
 void usage();
+int TCPConnection();
+int UDPConnection();
+int startTCPConnection();
+void mainLoop();
+void sendMessage();
+void receiveMessage();
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
@@ -35,11 +41,42 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+//  #######################################################
+void mainLoop(){
+
+}
+
 
 //  #######################################################
+int TCPConnection(){
 
+return 0;	
+}
+
+//  #######################################################
+int UDPConnection(){
+
+return 0;	
+}
+
+//  #######################################################
+int startTCPConnection(){
+
+return 0;	
+}
+
+//  #######################################################
+void sendMessage(){
+	
+}
+
+//  #######################################################
+void receiveMessage(){
+	
+}
+
+//  #######################################################
 void usage() {
     printf("Usage: roomServer.exe <port> <registration server IP> <registration server port> <max connected clients> <TCP/UDP  (<1/0>)>\n");
 }
 
-//  #######################################################
