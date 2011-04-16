@@ -3,7 +3,7 @@
  * Course: COSC 4653 - Advanced Networks
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: roomServer.c
- * Purpose: 
+ * Purpose: Create a chat room that will accept TCP and UDP connections
  * Usage: Usage: roomServer.exe <port> <registration server IP> <registration server port> <max connected clients> <TCP/UDP (<1/0>)>
  *
  * Limitations: 
@@ -11,7 +11,7 @@
  * Operating System: Ubuntu Linux 10.04
  * Integrated Development Environment (IDE): Netbeans 6.9.1
  * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
- * Operational Status: 
+ * Operational Status: Compiles, no functions yet.
  **/
 
 //INCLUDES ##########################################################
