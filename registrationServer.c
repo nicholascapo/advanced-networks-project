@@ -3,7 +3,7 @@
  * Course: COSC 4653 - Advanced Networks
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: registrationServer.c
- * Purpose: 
+ * Purpose: Create a TCP server that will keep track of chat room servers
  * Usage: registrationServer.exe <port>
  *
  * Limitations: The maximum number of rooms is limited at 100
@@ -11,7 +11,7 @@
  * Operating System: Ubuntu Linux 10.04
  * Integrated Development Environment (IDE): Netbeans 6.9.1
  * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
- * Operational Status: 
+ * Operational Status: Compiles, not complete.
  **/
 
 //INCLUDES ##########################################################
