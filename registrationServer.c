@@ -35,6 +35,7 @@ void sendRoomList(int connfd);
 void registerRoom(int connfd, RoomRecord* room);
 void deregisterRoom(int connfd, RoomRecord* room);
 int findEmptyIndex();
+void debugPopulateRoomList();
 
 // MAIN #######################################################
 
@@ -65,6 +66,10 @@ int main(int argc, char* argv[]) {
     serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     Bind(listenfd, (struct sockaddr *) &serveraddr, sizeof (serveraddr));
+
+    if (DEBUG){
+        debugPopulateRoomList();
+    }//END if
 
     Listen(listenfd, LISTENQ);
 
@@ -146,8 +151,6 @@ void sendRoomList(int connfd) {
 }//END sendRoomList()
 
 //  #######################################################
-//  Adds the new Room to the first empty index in roomList, and responds to roomServer with sucess or failure
-//  #######################################################
 //  Adds the specified room to the roomList in the first available index
 //  Send RegistrationMessge with type set to sucess or failue appropriately
 //  #######################################################
@@ -198,3 +201,23 @@ void deregisterRoom(int connfd, RoomRecord* room) {
     }//END if
 
 }//END deregisterRoom()
+
+//  #######################################################
+//  For Debugging Purposes: Adds dummy Rooms to the RoomList
+//  #######################################################
+void debugPopulateRoomList(){
+    //fields in RoomRecord
+    //int tcp;
+    //char name[MAX_USER_ID_LENGTH];
+    //char address[MAX_IPADDR_STRING_LENGTH];
+    //int port;
+
+    roomList[0] = (RoomRecord) { TRUE, "Test Server 1", "111.111.111.111", 111};
+    roomList[1] = (RoomRecord) { TRUE, "Test Server 2", "122.122.122.122", 222};
+    roomList[2] = (RoomRecord) { TRUE, "Test Server 3", "133.133.133.133", 333};
+    roomList[3] = (RoomRecord) { TRUE, "Test Server 4", "144.144.144.144", 444};
+    roomList[4] = (RoomRecord) { TRUE, "Test Server 5", "155.155.155.155", 555};
+    roomList[5] = (RoomRecord) { TRUE, "Test Server 6", "166.166.166.166", 666};
+    roomList[6] = (RoomRecord) { TRUE, "Test Server 7", "177.177.177.177", 777};
+
+}//END debugPopulateRoomList()
