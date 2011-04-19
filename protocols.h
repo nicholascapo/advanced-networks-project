@@ -32,11 +32,11 @@
 #define REGISTER_REQUEST 4
 #define REGISTER_LEAVE 5
 #define REGISTER_SUCESS 6
-#define REGISTER_FAILURE 6
-#define ROOM_QUERY 7
+#define REGISTER_FAILURE 7
+#define ROOM_QUERY 8
 
 typedef struct {
-    int tcp;
+    int type;
     char name[MAX_USER_ID_LENGTH];
     char address[MAX_IPADDR_STRING_LENGTH];
     int port;
