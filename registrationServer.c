@@ -20,8 +20,6 @@
 
 // CONSTANTS ########################################################
 
-#define LISTENQ 100
-
 // GLOBALS ##########################################################
 
 RoomRecord roomList[MAX_ROOMS];
@@ -67,11 +65,11 @@ int main(int argc, char* argv[]) {
 
     Bind(listenfd, (struct sockaddr *) &serveraddr, sizeof (serveraddr));
 
-    if (DEBUG){
+    if (DEBUG) {
         debugPopulateRoomList();
     }//END if
 
-    Listen(listenfd, LISTENQ);
+    Listen(listenfd, MAX_LISTEN_QUEUE_LENGTH);
 
     printf("READY TO ACCEPT CLIENT CONNECTIONS\n");
 
@@ -102,6 +100,8 @@ void processConnections(int listenfd) {
         //If I were to use pThreads I would need a thread-safe Array or storage of some kind.
         Read(connfd, &request, sizeof (request));
 
+        printf("Read Request: %d, %s, %s, %d\n", request.type, request.record.name, request.record.address, request.record.port);
+
         if (request.type == ROOM_QUERY) {
             int pid;
             //only fork if we need to send the room list,
@@ -120,12 +120,14 @@ void processConnections(int listenfd) {
             }//END if/else
         } else if (request.type == REGISTER_REQUEST) {
             //can't fork here because we need to write to the global RoomList
+            displayConnectionInfo(connfd);
             registerRoom(connfd, &request.record);
         } else if (request.type == REGISTER_LEAVE) {
             //can't fork here because we need to write to the global RoomList
+            displayConnectionInfo(connfd);
             deregisterRoom(connfd, &request.record);
         } else {
-            printf("ERROR: Command not Recognized: %d", request.type);
+            printf("ERROR: Command not Recognized: %d\n", request.type);
         }//END if/else
     }//END while
 
@@ -142,10 +144,14 @@ void sendRoomList(int connfd) {
 
     for (index = 0; index < roomCount; index++) {
         Write(connfd, &roomList[index], sizeof (roomList[index]));
+        if (DEBUG) {
+            printf("Wrote Room: %d, %s, %s, %d\n", roomList[index].type, roomList[index].name, roomList[index].address, roomList[index].port);
+        }//END if
     }//END for
 
     //EOF
     memset(&nullRoom, 0, sizeof (nullRoom));
+    nullRoom.type = ROOM_QUERY_COMPLETE;
     Write(connfd, &nullRoom, sizeof (nullRoom));
 
 }//END sendRoomList()
@@ -205,19 +211,29 @@ void deregisterRoom(int connfd, RoomRecord* room) {
 //  #######################################################
 //  For Debugging Purposes: Adds dummy Rooms to the RoomList
 //  #######################################################
-void debugPopulateRoomList(){
-    //fields in RoomRecord
-    //int tcp;
-    //char name[MAX_USER_ID_LENGTH];
-    //char address[MAX_IPADDR_STRING_LENGTH];
-    //int port;
 
-    roomList[0] = (RoomRecord) { TRUE, "Test Server 1", "111.111.111.111", 111};
-    roomList[1] = (RoomRecord) { TRUE, "Test Server 2", "122.122.122.122", 222};
-    roomList[2] = (RoomRecord) { TRUE, "Test Server 3", "133.133.133.133", 333};
-    roomList[3] = (RoomRecord) { TRUE, "Test Server 4", "144.144.144.144", 444};
-    roomList[4] = (RoomRecord) { TRUE, "Test Server 5", "155.155.155.155", 555};
-    roomList[5] = (RoomRecord) { TRUE, "Test Server 6", "166.166.166.166", 666};
-    roomList[6] = (RoomRecord) { TRUE, "Test Server 7", "177.177.177.177", 777};
+void debugPopulateRoomList() {
+    /*
+     * fields in RoomRecord
+     * int tcp;
+     * char name[MAX_USER_ID_LENGTH];
+     * char address[MAX_IPADDR_STRING_LENGTH];
+     * int port;
+     */
+    int i;
+
+    roomList[0] = (RoomRecord){TRUE, "Test Server 1", "111.111.111.111", 111};
+    roomList[1] = (RoomRecord){TRUE, "Test Server 2", "122.122.122.122", 222};
+    roomList[2] = (RoomRecord){TRUE, "Test Server 3", "133.133.133.133", 333};
+    roomList[3] = (RoomRecord){TRUE, "Test Server 4", "144.144.144.144", 444};
+    roomList[4] = (RoomRecord){TRUE, "Test Server 5", "155.155.155.155", 555};
+    roomList[5] = (RoomRecord){TRUE, "Test Server 6", "166.166.166.166", 666};
+    roomList[6] = (RoomRecord){TRUE, "Test Server 7", "177.177.177.177", 777};
+    roomCount = 7;
+
+    for (i = 0; i < roomCount; i++) {
+        printf("Added Room: %s, %s, %d, %d\n", roomList[i].name, roomList[i].address, roomList[i].port, roomList[i].type);
+    }//END for
+
 
 }//END debugPopulateRoomList()
