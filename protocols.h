@@ -17,12 +17,13 @@
 #ifndef PROTOCOLS
 #define PROTOCOLS
 
+#include <netinet/in.h>
+
 #define TRUE 1
 #define FALSE 0
 
 #define MAX_USER_ID_LENGTH 30
 #define MAX_MESSAGE_TEXT 160
-#define MAX_IPADDR_STRING_LENGTH 15
 #define MAX_ROOMS 100
 
 #define	MAX_LISTEN_QUEUE_LENGTH 10
@@ -41,7 +42,7 @@
 typedef struct {
     int type; //Must be a valid sock type (e.g. SOCK_STREAM or SOCK_DGRAM)
     char name[MAX_USER_ID_LENGTH];
-    char address[MAX_IPADDR_STRING_LENGTH];
+    char address[INET_ADDRSTRLEN];
     int port;
 } RoomRecord;
 
