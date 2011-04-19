@@ -110,37 +110,50 @@ int makeConnection(int sockType, char* ipAddress, int port) {
 }//end makeconnection
 
 //#############################################################################
-//Reads an array of RoomRecords from the server, storing them in list
+//Reads an array of RoomRecords from the server, storing them in roomList
 // Returns the number of rooms read
 //#############################################################################
 
 int readRoomList(int socketfd, RoomRecord* roomList) {
 
     RoomRecord tempRoom;
-    RoomRecord nullRoom;
-    int roomCount = 0;
+    RegistrationMessage request;
+    int index = -1;
 
-    memset(&nullRoom, 0, sizeof (nullRoom));
+    memset(&request, 0, sizeof (request));
+
+    //Send RoomList Query
+    request.type = ROOM_QUERY;
+    Write(socketfd, &request, sizeof (request));
 
     while (TRUE) {
         Read(socketfd, &tempRoom, sizeof (tempRoom));
 
+        if (DEBUG) {
+            printf("Read Room: %s, %s, %d, %d\n", tempRoom.name, tempRoom.address, tempRoom.port, tempRoom.type);
+        }//END if
+
         //check for EOF
-        if (tempRoom.name == nullRoom.name && tempRoom.address == nullRoom.address) {
+        if (tempRoom.type == ROOM_QUERY_COMPLETE) {
+            debug("Read EOF Room\n");
             break;
         } else {
-            memcpy(&roomList[roomCount], &tempRoom, sizeof (tempRoom));
-            roomCount++;
+            index++;
+            memcpy(&roomList[index], &tempRoom, sizeof (tempRoom));
+
         }//END if/else
 
     }//END while
 
-    if (roomCount == 0) {
+    if (index < 0) {
         printf("ERROR: No Servers were Found, please try again later...\n");
         exit(1);
     }//END if
 
-    return roomCount;
+    if (DEBUG) {
+        printf("Received %d Rooms from RegistrationServer", index + 1);
+    }//END if
+    return index + 1;
 }//END getRoomList()
 
 //#############################################################################

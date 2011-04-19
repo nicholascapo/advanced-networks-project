@@ -36,6 +36,7 @@
 #define REGISTER_SUCESS 6
 #define REGISTER_FAILURE 7
 #define ROOM_QUERY 8
+#define ROOM_QUERY_COMPLETE 9
 
 typedef struct {
     int type; //Must be a valid sock type (e.g. SOCK_STREAM or SOCK_DGRAM)
