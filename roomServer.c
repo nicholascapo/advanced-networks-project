@@ -19,9 +19,6 @@
 #include "wrapperFunctions.c"
 
 // CONSTANTS ########################################################
-#define	MAX_LISTEN_QUEUE_LENGTH 10
-#define TRUE 1
-#define FALSE 0
 #define	SA struct sockaddr
 // GLOBALS ##########################################################
 
