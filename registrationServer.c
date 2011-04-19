@@ -164,7 +164,7 @@ void registerRoom(int connfd, RoomRecord* room) {
         printf("ERROR: Could not allocate space for new Room: Registration Refused!");
         message.type = REGISTER_FAILURE;
     } else {
-        printf("Adding Room: %s", room->name);
+        printf("Adding Room: %s\n", room->name);
         roomList[roomCount] = *room;
         roomCount++;
         message.type = REGISTER_SUCESS;
@@ -193,11 +193,11 @@ void deregisterRoom(int connfd, RoomRecord* room) {
     }//END for
 
     if (sucess) {
-        printf("Removing Room: %s, %s", roomList[deleteIndex].name, roomList[deleteIndex].address);
+        printf("Removing Room: %s, %s\n", roomList[deleteIndex].name, roomList[deleteIndex].address);
         roomCount--;
         roomList[deleteIndex] = roomList[roomCount];
     } else {
-        printf("ERROR: Unable to find Room for Removal: %s, %s", roomList[i].name, roomList[i].address);
+        printf("ERROR: Unable to find Room for Removal: %s, %s\n", roomList[i].name, roomList[i].address);
     }//END if
 
 }//END deregisterRoom()
