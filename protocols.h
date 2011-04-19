@@ -38,7 +38,7 @@
 #define ROOM_QUERY 8
 
 typedef struct {
-    int type;
+    int type; //Must be a valid sock type (e.g. SOCK_STREAM or SOCK_DGRAM)
     char name[MAX_USER_ID_LENGTH];
     char address[MAX_IPADDR_STRING_LENGTH];
     int port;

@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     username = argv[3];
 
     //make a TCP connection to the registration server
-    socketfd = makeConnection(TRUE, ipAddr, port);
+    socketfd = makeConnection(SOCK_STREAM, ipAddr, port);
 
     roomCount = readRoomList(socketfd, roomList);
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     room = roomList[getRoomChoice(roomList, roomCount)];
 
     //make a connection to the Room Server
-    socketfd = makeConnection(room.tcp, room.address, room.port);
+    socketfd = makeConnection(room.type, room.address, room.port);
 
     chat(socketfd, username);
 
@@ -86,7 +86,7 @@ void checkArgc(int argc) {
 //Makes connection and returns the socket file descriptor
 //#############################################################################
 
-int makeConnection(int connectTCP, char* ipAddress, int port) {
+int makeConnection(int sockType, char* ipAddress, int port) {
     int socketfd;
     int status;
     struct sockaddr_in serverAddress;
@@ -102,13 +102,7 @@ int makeConnection(int connectTCP, char* ipAddress, int port) {
         exit(1);
     }
 
-    if (connectTCP) {
-        //TCP Setup
-        socketfd = Socket(AF_INET, SOCK_STREAM, 0);
-    } else {
-        //UDP Setup
-        socketfd = Socket(AF_INET, SOCK_DGRAM, 0);
-    }//end if
+    socketfd = Socket(AF_INET, sockType, 0);
 
     Connect(socketfd, (struct sockaddr *) & serverAddress, sizeof (serverAddress));
 
