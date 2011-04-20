@@ -198,12 +198,29 @@ void deregisterRoom(int connfd, RoomRecord* room) {
     int i;
     int sucess = FALSE;
     int deleteIndex = -1;
+    RegistrationMessage response;
+    struct sockaddr_in sa;
+    socklen_t len;
+    len = sizeof (sa);
+
+    //lookup the peername ip and use that instead of what the roomServer may (or may not) have given us, see Issue #10
+    Getpeername(connfd, (struct sockaddr *) &sa, &len);
+    memcpy(room->address, inet_ntoa(sa.sin_addr), sizeof (room->address));
+
+    memset(&response, 0, sizeof (response));
 
     for (i = 0; i < MAX_ROOMS; i++) {
-        if (roomList[i].name == room->name && roomList[i].address == room->address) {
-            deleteIndex = i;
-            sucess = TRUE;
-            break;
+        //if name are equal
+        if (strncmp(roomList[i].name, room->name, MAX_USER_ID_LENGTH) == 0) {
+            //AND addresses are equal
+            if (strncmp(roomList[i].address, room->address, INET_ADDRSTRLEN) == 0) {
+                //AND ports and types are equal
+                if (roomList[i].port == room->port && roomList[i].type == room->type) {
+                    deleteIndex = i;
+                    sucess = TRUE;
+                    break;
+                }//END if
+            }//END if
         }//END if
     }//END for
 
@@ -211,10 +228,13 @@ void deregisterRoom(int connfd, RoomRecord* room) {
         printf("Removing Room: %s, %s\n", roomList[deleteIndex].name, roomList[deleteIndex].address);
         roomCount--;
         roomList[deleteIndex] = roomList[roomCount];
+        response.type = REGISTER_SUCESS;
     } else {
-        printf("ERROR: Unable to find Room for Removal: %s, %s\n", roomList[i].name, roomList[i].address);
+        printf("ERROR: Unable to find Room for Removal: %s, %s\n", room->name, room->address);
+        response.type = REGISTER_FAILURE;
     }//END if
 
+    Write(connfd, &response, sizeof (response));
 }//END deregisterRoom()
 
 //  #######################################################
