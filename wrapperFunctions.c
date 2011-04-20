@@ -426,4 +426,31 @@ int Getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     return status;
 }//END Getpeername()
 
-//##############################################################
+//#############################################################################
+//Makes connection and returns the socket file descriptor
+//#############################################################################
+
+int makeConnection(int sockType, char* ipAddress, int port) {
+    int socketfd;
+    int status;
+    struct sockaddr_in serverAddress;
+
+    bzero(&serverAddress, sizeof (serverAddress));
+
+    //Setup Server Address
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_port = htons(port);
+    status = inet_pton(AF_INET, ipAddress, &serverAddress.sin_addr);
+    if (status != 1) {
+        printf("Unable to resolve server IP");
+        exit(1);
+    }
+
+    socketfd = Socket(AF_INET, sockType, 0);
+
+    Connect(socketfd, (struct sockaddr *) & serverAddress, sizeof (serverAddress));
+
+    return socketfd;
+}//end makeconnection
+
+//#############################################################################
