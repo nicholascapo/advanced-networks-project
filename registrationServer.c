@@ -170,7 +170,16 @@ void registerRoom(int connfd, RoomRecord* room) {
         printf("ERROR: Could not allocate space for new Room: Registration Refused!");
         message.type = REGISTER_FAILURE;
     } else {
+        struct sockaddr_in sa;
+        socklen_t len;
+        len = sizeof (sa);
+
         printf("Adding Room: %s\n", room->name);
+
+        //lookup the peername ip and use that instead of what the roomServer may (or may not) have given us, see Issue #10
+        Getpeername(connfd, (struct sockaddr *) &sa, &len);
+        memcpy(room->address, inet_ntoa(sa.sin_addr), sizeof (room->address));
+
         roomList[roomCount] = *room;
         roomCount++;
         message.type = REGISTER_SUCESS;
