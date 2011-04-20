@@ -21,10 +21,12 @@
 
 #define TRUE 1
 #define FALSE 0
+#define SOCKET_NOT_CONNECTED -1
 
 #define MAX_USER_ID_LENGTH 30
 #define MAX_MESSAGE_TEXT 160
 #define MAX_ROOMS 100
+#define MAX_CLIENTS 32
 
 #define	MAX_LISTEN_QUEUE_LENGTH 10
 
