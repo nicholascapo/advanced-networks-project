@@ -18,7 +18,11 @@
 
 #define TRUE 1
 #define FALSE 0
-#define DEBUG TRUE
+#define DEBUG FALSE
+
+// GLOBALS ##############################################################
+
+int socketList[MAX_CLIENTS];
 
 //##############################################################
 
@@ -33,6 +37,8 @@
 #include	<string.h>
 #include	<unistd.h>
 #include	<sys/wait.h>
+
+#include "protocols.h"
 
 //##############################################################
 
@@ -81,17 +87,20 @@ void SigAction(int signum, Sigfunc* handler) {
 
     if (status < 0) {
         perror("Signal Action Error");
-        exit(1);
+        cleanup();
     }//END if
 }//END Signal()
 
 //##############################################################
 
-void Close(int connfd) {
-    int status = close(connfd);
+void Close(int socket) {
+    int status;
+    socketList[socket] = SOCKET_NOT_CONNECTED;
+    status = close(socket);
     debug("Close");
     if (status < 0) {
         perror("Close Error");
+        //NOT CLEANUP() SINCE CLEANUP() CALLS CLOSE()
         exit(1);
     }//END if
 }//END Close()
@@ -141,6 +150,8 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
         cleanup();
     }
 
+    socketList[connfd] = connfd;
+
     return connfd;
 
 
@@ -149,12 +160,12 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
 //##############################################################
 
 int Socket(int domain, int type, int protocol) {
-    int listenfd;
+    int socketfd;
 
     debug("Socket");
 
     while (TRUE) {
-        listenfd = socket(domain, type, protocol);
+        socketfd = socket(domain, type, protocol);
         if (errno == EINTR) {
             continue;
         } else {
@@ -162,11 +173,14 @@ int Socket(int domain, int type, int protocol) {
         }//END if/else
     }//END while
 
-    if (listenfd < 0) {
+    if (socketfd < 0) {
         perror("Socket Error");
         cleanup();
     }
-    return listenfd;
+
+    socketList[socketfd] = socketfd;
+
+    return socketfd;
 }//END Socket()
 
 //##############################################################
@@ -340,8 +354,15 @@ int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 //##############################################################
 
 void cleanup() {
-    printf("ERROR: cleanup() is a stub");
-    exit(1);
+    int i;
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        if (socketList[i] == SOCKET_NOT_CONNECTED) {
+            continue;
+        } else {
+            Close(socketList[i]);
+        }//END if/else
+    }//END for
+    exit(0);
 }//END cleanup()
 
 //##############################################################
@@ -364,7 +385,7 @@ int Kill(pid_t pid, int sig) {
 
     if (status < 0) {
         perror("Kill Error");
-        exit(1);
+        cleanup();
     }//END if
 
     return status;
@@ -403,7 +424,7 @@ int Getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     status = getsockname(sockfd, addr, &len);
     if (status < 0) {
         perror("Get Sock Name Error\n");
-        exit(1);
+        cleanup();
     }//END if
 
     return status;
@@ -420,7 +441,7 @@ int Getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     status = getpeername(sockfd, addr, &len);
     if (status < 0) {
         perror("Get Peer Name Error\n");
-        exit(1);
+        cleanup();
     }//END if
 
     return status;
@@ -443,7 +464,7 @@ int makeConnection(int sockType, char* ipAddress, int port) {
     status = inet_pton(AF_INET, ipAddress, &serverAddress.sin_addr);
     if (status != 1) {
         printf("Unable to resolve server IP");
-        exit(1);
+        cleanup();
     }
 
     socketfd = Socket(AF_INET, sockType, 0);
