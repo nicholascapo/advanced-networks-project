@@ -22,6 +22,9 @@
 #define	SA struct sockaddr
 // GLOBALS ##########################################################
 
+//don't cunfuse this with socketList in wrapperFunctions.c, this is only for clients in the chatroom
+int clientList[MAX_CLIENTS];
+
 char* roomName;
 int roomType;
 int roomPort;
@@ -32,14 +35,12 @@ int regServerPort;
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
 void mainLoop(int listenfd);
-void sendMessage();
-void receiveMessage();
+void repeatMessage(int connfd);
 void notifyRegServer(int message);
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
     int listenfd;
-    fd_set select_fds; //file descriptor list for select()
     struct sockaddr_in serverAddress;
 
     //Check Argc for correct requirements
@@ -74,6 +75,8 @@ int main(int argc, char* argv[]) {
     //Testing Purposes
     fprintf(stderr, "press any key to continue\n"); // better form
     getchar();
+
+    //mainLoop(listenfd);
 
     notifyRegServer(REGISTER_LEAVE);
 
@@ -136,6 +139,29 @@ void notifyRegServer(int message) {
 //#######################################################
 
 void mainLoop(int listenfd) {
+    int i;
+    fd_set select_fds; //file descriptor list for select()
+
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        clientList[i] = SOCKET_NOT_CONNECTED;
+    }//END for
+
+    FD_ZERO(&select_fds);
+
+    while (TRUE) {
+        //SELECT
+
+        //Handle connections from new clients (STATUS_JOIN)
+        //Handle clients leaving (STATUS_LEAVE)
+
+        //FORK
+        //CHILD
+        //      REPEAT_MESSAGE()
+        //      This is exit() NOT cleanup() since we dont need to close any of the sockets
+        //      exit(1);
+        //PARENT
+
+    }//END while
 
 }//END mainLoop()
 
@@ -143,15 +169,17 @@ void mainLoop(int listenfd) {
 //  Sends message to all connected clients
 //#######################################################
 
-void sendMessage() {
+void repeatMessage(int connfd) {
+    ChatMessage message;
+    int i;
 
-}
+    Read(connfd, &message, sizeof (message));
 
-//#######################################################
-//  Receive message from a client
-//#######################################################
-
-void receiveMessage() {
-
-}
-
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        if (clientList[i] == SOCKET_NOT_CONNECTED) {
+            continue;
+        } else {
+            Write(clientList[i], &message, sizeof (message));
+        }//END if/else
+    }//END for
+}//END sendMessage()
