@@ -119,7 +119,7 @@ void notifyRegServer(int message) {
     } else {
         printf("Room Registration Responded, Unknown Error\n");
     }
-
+    Close(socketfd);
 }// End notifyRegServer
 
 //#######################################################
