@@ -37,6 +37,8 @@ void checkArgc(int argc);
 void mainLoop(int listenfd);
 void repeatMessage(int connfd);
 void notifyRegServer(int message);
+int createConnection(char* argv[]);
+struct sockaddr_in setupAddress();
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
@@ -47,26 +49,8 @@ int main(int argc, char* argv[]) {
     checkArgc(argc);
 
     useStandardSignalHandlers();
-
-    roomPort = atoi(argv[1]);
-    regServerAddress = argv[2];
-    regServerPort = atoi(argv[3]);
-    if (atoi(argv[4]) == TRUE) {
-        //TCP
-        roomType = SOCK_STREAM;
-    } else {
-        //UDP
-        roomType = SOCK_DGRAM;
-    }//END if/else
-
-    roomName = argv[5];
-
-    //Setup and Bind to port and Listen
-    listenfd = Socket(AF_INET, roomType, 0);
-    bzero(&serverAddress, sizeof (serverAddress));
-    serverAddress.sin_family = AF_INET;
-    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverAddress.sin_port = htons(roomPort);
+    listenfd = createConnection(argv);
+    serverAddress = setupAddress();
 
     Bind(listenfd, (struct sockaddr *) &serverAddress, sizeof (serverAddress));
     Listen(listenfd, MAX_LISTEN_QUEUE_LENGTH);
@@ -75,10 +59,10 @@ int main(int argc, char* argv[]) {
     notifyRegServer(REGISTER_REQUEST);
 
     //Testing Purposes
-    fprintf(stderr, "press any key to continue\n"); // better form
+    fprintf(stderr, "press any key to continue\n");
     getchar();
 
-    //mainLoop(listenfd);
+    mainLoop(listenfd);
 
     notifyRegServer(REGISTER_LEAVE);
 
@@ -95,6 +79,41 @@ void checkArgc(int argc) {
         exit(1);
     } // End if
 }//end checkArgc()
+
+//  #######################################################
+// Creates connection and returns a FD.
+//  #######################################################
+int createConnection(char* argv[]){
+    int socketfd;
+    roomPort = atoi(argv[1]);
+    regServerAddress = argv[2];
+    regServerPort = atoi(argv[3]);
+    if (atoi(argv[4]) == TRUE) {//TCP
+        roomType = SOCK_STREAM;
+    } else {//UDP
+        roomType = SOCK_DGRAM;
+    }//END if/else
+
+    roomName = argv[5];
+
+    //Setup and Bind to port and Listen
+    socketfd = Socket(AF_INET, roomType, 0);
+	
+return socketfd;	
+}
+//  #######################################################
+// Creates the serverAddress struct
+//  #######################################################
+struct sockaddr_in setupAddress(){
+struct sockaddr_in serverAddress;
+
+bzero(&serverAddress, sizeof (serverAddress));
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddress.sin_port = htons(roomPort);
+
+return serverAddress;	
+}
 
 //  #######################################################
 // Sends notification to Registration server
@@ -141,28 +160,83 @@ void notifyRegServer(int message) {
 //#######################################################
 
 void mainLoop(int listenfd) {
+	//code from page 178
+    int clientfd;
+    int socketfd;
     int i;
-    fd_set select_fds; //file descriptor list for select()
+    int nready;
+    fd_set rset;
+    fd_set allset;
+    socklen_t clientLength;
+    struct sockaddr_in clientAddress;
+    ssize_t n;
+    char buffer[MAX_MESSAGE_TEXT];
+    int maxfd = listenfd;
+    int maxi = -1;
+    
+    for(i = 0; i< MAX_CLIENTS; i++){
+    	    clientList[i] = -1;
+    }
+    FD_ZERO(&allset);
+    FD_SET(listenfd, &allset);
+    
+    //code from book page 179
+    while (TRUE) { 
+    	    rset = allset;
+    	    nready = select(maxfd+1,&rset,NULL,NULL,NULL);
+    	    
+    	    if(FD_ISSET(listenfd, &rset)){//new client connection
+    	    	    clientLength = sizeof(clientAddress);
+    	    	    clientfd = Accept(listenfd, (SA*) &clientAddress,&clientLength);
+    	    	    
+    	    	    for(i=0;i<MAX_CLIENTS;i++){
+    	    	    	    if(clientList[i] < 0){ //store FD in the next available
+    	    	    	    clientList[i] = clientfd; //save connection descriptor
+    	    	    	    break;//break for loop
+    	    	    	    }//END IF
+    	    	    }//END FOR
+		    if(i == MAX_CLIENTS){
+			    printf("Server is full, cannot connect another");	    
+		    }//END IF
+		    FD_SET(clientfd, &allset); //add FD to set
+		    if(clientfd > maxfd){
+		    	    maxfd = clientfd; //for select
+		    }
+		    if(i > maxi){
+		    	    maxi = i; //max index in client[]
+		    }
+		    nready--;
+		    if(nready <=0){
+		    	    continue; //no more readable FDs
+		    }
+	    }
+	    
+	    for(i=0;i<=maxi;i++){ //Check all clients for data
+	    	    socketfd = clientList[i];
+	    	    if(socketfd <0){
+	    	    	   continue;
+	    	    }
+	    	    if(FD_SET(socketfd,&rset)){
+	    	    	    n = Read(socketfd, buffer,MAX_MESSAGE_TEXT);
+	    	    	    if(n == 0){ //connection closed by client
+	    	    	    	    Close(socketfd);
+	    	    	    	    FD_CLR(socketfd,&allset);
+	    	    	    	    clientList[i] = -1;
+	    	    	    }else{
+	    	    	    	    //PERFORM WRITE FUNCTIONS
+	    	    	    	    //START FORK OPERATION HERE
+	    	    	    	    //Just prints to command line for now
+	    	    	    	    printf("%s\n",buffer);
+	    	    	    }
+	    	    	    nready--;
+	    	    	    if(nready <=0){
+	    	    	    	    break;
+	    	    	    }//no more readable FDs
+    	    	    
+	    	    }//END IF
 
-    for (i = 0; i < MAX_CLIENTS; i++) {
-        clientList[i] = SOCKET_NOT_CONNECTED;
-    }//END for
-
-    FD_ZERO(&select_fds);
-
-    while (TRUE) {
-        //SELECT
-
-        //Handle connections from new clients (STATUS_JOIN)
-        //Handle clients leaving (STATUS_LEAVE)
-
-        //FORK
-        //CHILD
-        //      REPEAT_MESSAGE()
-        //      This is exit() NOT cleanup() since we dont need to close any of the sockets
-        //      exit(1);
-        //PARENT
-
+    	    }//END FOR
+    	    
     }//END while
 
 }//END mainLoop()
