@@ -22,7 +22,7 @@
 
 // GLOBALS ##############################################################
 
-int socketList[MAX_CLIENTS];
+int socketList[MAX_SOCKETS];
 
 //##############################################################
 
@@ -355,13 +355,22 @@ int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
 void cleanup() {
     int i;
-    for (i = 0; i < MAX_CLIENTS; i++) {
+    //start at index 3 so as not to close stdin, stdout, and stderr
+    for (i = 3; i < MAX_SOCKETS; i++) {
         if (socketList[i] == SOCKET_NOT_CONNECTED) {
             continue;
         } else {
             Close(socketList[i]);
         }//END if/else
     }//END for
+    for (i = 3; i < MAX_SOCKETS; i++) {
+        if (socketList[i] == SOCKET_NOT_CONNECTED) {
+            continue;
+        } else {
+            printf("ERROR: Socket not closed after call to cleanup!!");
+        }//END if/else
+    }//END for
+
     exit(0);
 }//END cleanup()
 
