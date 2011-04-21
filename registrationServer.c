@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     }//END if
 
     useStandardSignalHandlers();
+
     port = atoi(argv[1]);
 
     listenfd = Socket(AF_INET, SOCK_STREAM, 0);
