@@ -3,3 +3,4 @@ nbproject
 build
 *.exe
 ./Makefile-project.mk
+.dep.inc
