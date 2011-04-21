@@ -46,6 +46,8 @@ int main(int argc, char* argv[]) {
     //Check Argc for correct requirements
     checkArgc(argc);
 
+    useStandardSignalHandlers();
+
     roomPort = atoi(argv[1]);
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);

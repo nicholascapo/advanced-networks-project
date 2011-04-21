@@ -48,6 +48,8 @@ int main(int argc, char* argv[]) {
     //Check Argc for correct requirements
     checkArgc(argc);
 
+    useStandardSignalHandlers();
+
     //Setup Connection Specs
     ipAddr = argv[1];
     port = atoi(argv[2]);

@@ -60,6 +60,10 @@ void Close(int connfd);
 void displayConnectionInfo(int socket);
 int Getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int Getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+void handleSigTerm(int signo);
+void useStandardSignalHandlers();
+void handleSigChld(int signo);
+void handleSigPipe(int signno);
 
 //##############################################################
 
@@ -482,5 +486,41 @@ int makeConnection(int sockType, char* ipAddress, int port) {
 
     return socketfd;
 }//end makeconnection
+
+//#############################################################################
+
+void handleSigTerm(int signo) {
+    printf("Caught SIGTERM: Exiting\n");
+    cleanup();
+}//END handleSigTerm()
+
+//#############################################################################
+
+void handleSigChld(int signo) {
+    pid_t pid;
+    int stat;
+    pid = waitpid(-1, &stat, WNOHANG);
+
+    while (pid > 0) {
+        printf("Child #%d Terminated\n", pid);
+        return;
+    }//END while
+}//END handlerSigChld()
+
+//#############################################################################
+
+void handleSigPipe(int signno) {
+    printf("Broken Pipe: Exiting\n");
+    cleanup();
+}//END handleSigPipe()
+
+//#############################################################################
+
+void useStandardSignalHandlers() {
+    SigAction(SIGTERM, handleSigTerm);
+    SigAction(SIGCHLD, handleSigChld);
+    SigAction(SIGPIPE, handleSigPipe);
+}//END registerStandardHandlers()
+
 
 //#############################################################################
