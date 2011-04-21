@@ -114,11 +114,20 @@ void notifyRegServer(int message) {
     Read(socketfd, &statusUpdate, sizeof (statusUpdate));
     if (statusUpdate.type == REGISTER_SUCESS) {
         printf("Room Registration/Deregistration Suceeded\n");
+    } else if (statusUpdate.type == REGISTER_FAILURE_NO_MEM) {
+        printf("Room Registration Failed: Too Many Servers\n");
+        cleanup();
+    } else if (statusUpdate.type == REGISTER_FAILURE_NAME_EXISTS) {
+        printf("Room Registration Failed: Room Name Already Registered, Choose Another Name\n");
+        cleanup();
     } else if (statusUpdate.type == REGISTER_FAILURE) {
-        printf("Room Registration/Deregistration Failed\n");
+        printf("Room Registration/Deregistration Failed, Unknown Error\n");
+        cleanup();
     } else {
-        printf("Room Registration Responded, Unknown Error\n");
-    }
+        printf("Room Registration/Deregistration Responded, Unknown Error\n");
+        cleanup();
+    }//END if/else
+
     Close(socketfd);
 }// End notifyRegServer
 

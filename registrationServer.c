@@ -33,6 +33,7 @@ void sendRoomList(int connfd);
 void registerRoom(int connfd, RoomRecord* room);
 void deregisterRoom(int connfd, RoomRecord* room);
 int findEmptyIndex();
+int findRoom(char* name);
 void debugPopulateRoomList();
 
 // MAIN #######################################################
@@ -167,8 +168,12 @@ void registerRoom(int connfd, RoomRecord* room) {
     memset(&message, 0, sizeof (message));
 
     if (roomCount == MAX_ROOMS) {
-        printf("ERROR: Could not allocate space for new Room: Registration Refused!");
-        message.type = REGISTER_FAILURE;
+        printf("ERROR: Could not allocate space for new Room: Registration Refused!\n");
+        message.type = REGISTER_FAILURE_NO_MEM;
+    } else if (findRoom(room->name) > -1) {
+        //Room exists!
+        printf("ERROR: Room %s Already Registerted: Registration Refused!\n", room->name);
+        message.type = REGISTER_FAILURE_NAME_EXISTS;
     } else {
         struct sockaddr_in sa;
         socklen_t len;
@@ -195,36 +200,13 @@ void registerRoom(int connfd, RoomRecord* room) {
 //  #######################################################
 
 void deregisterRoom(int connfd, RoomRecord* room) {
-    int i;
-    int sucess = FALSE;
-    int deleteIndex = -1;
+    int deleteIndex;
     RegistrationMessage response;
-    struct sockaddr_in sa;
-    socklen_t len;
-    len = sizeof (sa);
-
-    //lookup the peername ip and use that instead of what the roomServer may (or may not) have given us, see Issue #10
-    Getpeername(connfd, (struct sockaddr *) &sa, &len);
-    memcpy(room->address, inet_ntoa(sa.sin_addr), sizeof (room->address));
 
     memset(&response, 0, sizeof (response));
 
-    for (i = 0; i < MAX_ROOMS; i++) {
-        //if name are equal
-        if (strncmp(roomList[i].name, room->name, MAX_USER_ID_LENGTH) == 0) {
-            //AND addresses are equal
-            if (strncmp(roomList[i].address, room->address, INET_ADDRSTRLEN) == 0) {
-                //AND ports and types are equal
-                if (roomList[i].port == room->port && roomList[i].type == room->type) {
-                    deleteIndex = i;
-                    sucess = TRUE;
-                    break;
-                }//END if
-            }//END if
-        }//END if
-    }//END for
-
-    if (sucess) {
+    deleteIndex = findRoom(room->name);
+    if (deleteIndex > -1) {
         printf("Removing Room: %s, %s\n", roomList[deleteIndex].name, roomList[deleteIndex].address);
         roomCount--;
         roomList[deleteIndex] = roomList[roomCount];
@@ -236,6 +218,24 @@ void deregisterRoom(int connfd, RoomRecord* room) {
 
     Write(connfd, &response, sizeof (response));
 }//END deregisterRoom()
+
+//  #######################################################
+//  Searches the roomList and returns the index of the room with the specified name, -1 on error
+//  #######################################################
+
+int findRoom(char* name) {
+    int i;
+    int result = -1;
+
+    for (i = 0; i < MAX_ROOMS; i++) {
+        //if names are equal (Name must be unique)
+        if (strncmp(roomList[i].name, name, MAX_USER_ID_LENGTH) == 0) {
+            result = i;
+            break;
+        }//END if
+    }//END for
+    return result;
+}//END findRoom()
 
 //  #######################################################
 //  For Debugging Purposes: Adds dummy Rooms to the RoomList
