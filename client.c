@@ -21,6 +21,8 @@
 
 // CONSTANTS ########################################################
 
+#define QUIT_COMMAND "/quit"
+
 // GLOBALS ##########################################################
 
 // PROTOTYPES #######################################################
@@ -172,6 +174,9 @@ void chat(int socketfd, char* username) {
     if (pid == 0) {
         //CHILD
         userOutput(socketfd);
+        printf("ERROR: Child Process Exited Prematurely!!\n");
+        //Only the parent should call cleanup()
+        exit(1);
     }//END if
 
     //PARENT
@@ -188,14 +193,14 @@ void chat(int socketfd, char* username) {
 //#############################################################################
 
 void sendStatus(int socketfd, char* username, int status) {
-    ChatMessage m;
+    ChatMessage message;
 
-    memset(&m, 0, sizeof (m));
+    memset(&message, 0, sizeof (message));
 
-    m.status = status;
-    strncpy(m.user, username, MAX_USER_ID_LENGTH);
+    message.status = status;
+    strncpy(message.user, username, MAX_USER_ID_LENGTH);
 
-    Write(socketfd, &m, sizeof (m));
+    Write(socketfd, &message, sizeof (message));
 
 }//END sendJoin()
 
@@ -205,8 +210,9 @@ void sendStatus(int socketfd, char* username, int status) {
 
 void userOutput(int socketfd) {
     ChatMessage message;
-
-    while (TRUE) {
+    int i;
+    //while (TRUE) {
+    for (i = 0; i < 5; i++) {
         Read(socketfd, &message, sizeof (message));
         printf("%s : %s", message.user, message.text);
     }//END while
@@ -219,13 +225,19 @@ void userOutput(int socketfd) {
 
 void userInput(int socketfd, char* username) {
     ChatMessage message;
-    char* text = NULL;
+    char text[MAX_MESSAGE_TEXT];
 
     while (TRUE) {
         strncpy(message.user, username, MAX_USER_ID_LENGTH);
         message.status = STATUS_ONLINE;
 
         scanf("%s", text);
+
+        if (strncmp(text, QUIT_COMMAND, sizeof (QUIT_COMMAND)) == 0) {
+            debug("Got Quit Command");
+            break;
+        }//END if
+
         strncpy(message.text, text, MAX_MESSAGE_TEXT);
 
         Write(socketfd, &message, sizeof (message));
