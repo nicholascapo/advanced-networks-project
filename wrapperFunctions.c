@@ -37,6 +37,7 @@ int socketList[MAX_SOCKETS];
 #include	<string.h>
 #include	<unistd.h>
 #include	<sys/wait.h>
+#include 	<fcntl.h>	//non-blocking see roomserver createConnection()
 
 #include "protocols.h"
 
@@ -143,7 +144,13 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     while (TRUE) {
         connfd = accept(sockfd, addr, addrlen);
         if (errno == EINTR) {
-            continue;
+            break;
+        } else if (errno == EWOULDBLOCK) {
+            break;
+        } else if (errno == ECONNABORTED) {
+            break;
+        } else if (errno == EPROTO) {
+            break;
         } else {
             break;
         }//END if/else
