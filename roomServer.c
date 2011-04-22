@@ -58,10 +58,6 @@ int main(int argc, char* argv[]) {
     //Notify Registration Server
     notifyRegServer(REGISTER_REQUEST);
 
-    //Testing Purposes
-    fprintf(stderr, "press any key to continue\n");
-    getchar();
-
     mainLoop(listenfd);
 
     notifyRegServer(REGISTER_LEAVE);
