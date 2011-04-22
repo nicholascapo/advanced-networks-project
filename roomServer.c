@@ -44,8 +44,7 @@ struct sockaddr_in setupAddress();
 int main(int argc, char* argv[]) {
     int listenfd;
     struct sockaddr_in serverAddress;
-
-
+    int reuseaddr_value = 1;
 
     //Check Argc for correct requirements
     checkArgc(argc);
@@ -53,6 +52,9 @@ int main(int argc, char* argv[]) {
     useStandardSignalHandlers();
     listenfd = createConnection(argv);
     serverAddress = setupAddress();
+
+    //Set Reuse Address to True
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr_value, sizeof (reuseaddr_value));
 
     Bind(listenfd, (struct sockaddr *) &serverAddress, sizeof (serverAddress));
     Listen(listenfd, MAX_LISTEN_QUEUE_LENGTH);
