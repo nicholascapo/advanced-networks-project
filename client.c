@@ -205,10 +205,22 @@ void sendStatus(int socketfd, char* username, int status) {
 
 void userOutput(int socketfd) {
     ChatMessage message;
-
+    fd_set rset;
+    fd_set allset;
+    int n;
+    FD_SET(socketfd, &allset);
+    
     while (TRUE) {
-        Read(socketfd, &message, sizeof (message));
-        printf("%s : %s", message.user, message.text);
+    	rset = allset;
+    	if (FD_SET(socketfd, &rset)) {
+    		n = Read(socketfd, &message, sizeof (message));
+    		 if (n == 0) { //connection closed by client
+                    printf("CLIENT CLOSED CONNECTION\n");
+                    break;
+                }
+    		printf("%s : %s", message.user, message.text);
+        }
+                bzero(&message,sizeof(message));
     }//END while
 
 }//END output()
@@ -219,16 +231,17 @@ void userOutput(int socketfd) {
 
 void userInput(int socketfd, char* username) {
     ChatMessage message;
-    char* text = NULL;
+    char text[MAX_MESSAGE_TEXT];
 
     while (TRUE) {
         strncpy(message.user, username, MAX_USER_ID_LENGTH);
         message.status = STATUS_ONLINE;
 
-        scanf("%s", text);
+        scanf("%s",text);
         strncpy(message.text, text, MAX_MESSAGE_TEXT);
 
         Write(socketfd, &message, sizeof (message));
+        bzero(&text,sizeof(text));
 
     }//END while
 
