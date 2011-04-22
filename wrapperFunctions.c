@@ -451,7 +451,7 @@ int Getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
 
     len = sizeof (addr);
 
-    status = getpeername(sockfd, addr, &len);
+    status = getpeername(sockfd, addr, addrlen);
     if (status < 0) {
         perror("Get Peer Name Error\n");
         cleanup();
