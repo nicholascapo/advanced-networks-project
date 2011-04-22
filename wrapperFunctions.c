@@ -255,8 +255,6 @@ ssize_t Write(int fd, const void *buf, size_t count) {
         size = write(fd, buf, count);
         if (errno == EINTR) {
             continue;
-        } else if (errno == ECONNRESET) {
-            printf("Caught ECONNRESET: Trying again...\n");
         } else {
             break;
         }//END if/else
@@ -273,6 +271,9 @@ ssize_t Write(int fd, const void *buf, size_t count) {
         cleanup();
     } else if (errno == ENETUNREACH) {
         printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ECONNRESET) {
+        printf("Caught ECONNRESET: Exiting\n");
         cleanup();
     } else if (size < 0) {
         perror("Read Error");
@@ -294,8 +295,6 @@ ssize_t Read(int fd, void *buf, size_t count) {
         size = read(fd, buf, count);
         if (errno == EINTR) {
             continue;
-        } else if (errno == ECONNRESET) {
-            printf("Caught ECONNRESET: Trying again...\n");
         } else {
             break;
         }//END if/else
@@ -312,6 +311,9 @@ ssize_t Read(int fd, void *buf, size_t count) {
         cleanup();
     } else if (errno == ENETUNREACH) {
         printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ECONNRESET) {
+        printf("Caught ECONNRESET: Exiting\n");
         cleanup();
     } else if (size < 0) {
         perror("Read Error");
@@ -334,8 +336,6 @@ int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
         status = connect(sockfd, addr, addrlen);
         if (errno == EINTR) {
             continue;
-        } else if (errno == ECONNRESET) {
-            printf("Caught ECONNRESET: Trying again...\n");
         } else {
             break;
         }//END if/else
@@ -352,6 +352,9 @@ int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
         cleanup();
     } else if (errno == ENETUNREACH) {
         printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ECONNRESET) {
+        printf("Caught ECONNRESET: Exiting\n");
         cleanup();
     } else if (status < 0) {
         perror("Read Error");
@@ -396,8 +399,6 @@ int Kill(pid_t pid, int sig) {
         status = kill(pid, sig);
         if (errno == EINTR) {
             continue;
-        } else if (errno == ECONNRESET) {
-            printf("Caught ECONNRESET: Trying again...\n");
         } else {
             break;
         }//END if/else
