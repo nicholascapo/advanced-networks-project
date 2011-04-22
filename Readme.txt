@@ -1,17 +1,41 @@
-STUDENTS NAMES: Andy Aloia and Nicolas Capo
-COURSE NAME: COSC 4653 - Advanced Networks
-ASSIGNMENT: #8 - Two Unique Servers
-APPLICATION DESCRIPTION: <Text Here>
+1. STUDENT NAMES: Andy Aloia and Nicholas Capo
 
-SOURCE CODE FILES: 	protocols.h	client.c	
-			registrationServer.c
-			roomServer.c	WrapperFunctions.s
+2. COURSE NAME: COSC 4653 - Advanced Networks
 
-BUILD DIRECTIONS:	Use Makefile or
-	gcc client.c -o client(.exe)
-	gcc registrationServer.c -o registrationServer(.exe)
-	gcc roomServer.c -o roomServer(.exe)
+3. ASSIGNMENT: #8 - Two Unique Servers
 
-RUN DIRECTIONS:
+4. APPLICATION DESCRIPTION:
+	****Two or more paragraphs describing what your application does overall and what each client and server program does.****
 
-OPERATIONAL STATUs:
+5. SOURCE CODE FILES:
+	1. registrationServer.c
+	2. roomServer.c
+	3. client.c
+	4. wrapperFunctions.c
+	5 protocols.h
+
+6. BUILD DIRECTIONS:
+	See Makefile
+
+7. RUN DIRECTIONS:
+	1. Run the Registration Server:
+		registrationserver.exe <port>
+	2. Run 1-n Room Servers, each with unique Port numbers and unique Room Names:
+		roomServer.exe <room Port> <regSrv IP> <regSrv Port> <Room Name>
+	3. Run 1-n Clients, providing the Address and port of the Registration Server, and a nickname for your user
+		client.exe <regSrv IP> <regSrv Port> <Nickname>
+
+8. OPERATIONAL STATUS:****STATUS****
+
+	Registration Server: ****STATUS****
+		****BUGS****
+		* It is possible for a Room Server to cause the Registration Server to block forever, this is because the room server cannot fork during a Registration or a De-registration Event. It does however fork for client connections.
+		*
+			
+	Room Server:****STATUS****
+		* Multi-Homeing of Room Servers has not been tested and is not expected to be reliable. The Room Server IP Address it determined based on the Registration Connection from the Room Server to the Registration Server, multi-homeing may make this unreliable.
+		* 
+	Client:****STATUS****
+		*
+		
+		
