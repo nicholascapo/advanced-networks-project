@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
     int listenfd;
     struct sockaddr_in serverAddress;
 
+       
+    
     //Check Argc for correct requirements
     checkArgc(argc);
 
@@ -81,6 +83,7 @@ void checkArgc(int argc) {
 //  #######################################################
 int createConnection(char* argv[]){
     int socketfd;
+    int x;
     roomPort = atoi(argv[1]);
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);
@@ -94,6 +97,8 @@ int createConnection(char* argv[]){
 
     //Setup and Bind to port and Listen
     socketfd = Socket(AF_INET, roomType, 0);
+    x=fcntl(socketfd,F_GETFL,0);
+    fcntl(socketfd,F_SETFL,x | O_NONBLOCK);
 	
 return socketfd;	
 }
@@ -171,6 +176,7 @@ void mainLoop(int listenfd) {
     int maxi = -1;
     ChatMessage message;
     int childpid;
+
     
     //initialize socket list
     for(i = 0; i< MAX_CLIENTS; i++){
@@ -183,9 +189,17 @@ void mainLoop(int listenfd) {
     if(DEBUG){
     printf("Entering While Loop\n");	    
     }
-    while (TRUE) { 
+    while (TRUE) {
     	    rset = allset;
+    	    
     	    nready = select(maxfd+1,&rset,NULL,NULL,NULL);
+	    if(nready < 0){
+	    	    if(errno == EINTR){
+	    	    	    continue;
+	    	    }else{
+	    	    	    printf("Select Error\n");
+	    	    }
+	    }
     	    
     	    if(FD_ISSET(listenfd, &rset)){//check for new client connection
     	    	    clientLength = sizeof(clientAddress);
@@ -208,67 +222,76 @@ void mainLoop(int listenfd) {
 		    if(i > maxi){
 		    	    maxi = i; //max index in client[]
 		    }
-		    --nready;
-		    if(nready <=0){
+		    
+		    if(--nready<=0){
 		    	    continue; //no more readable FDs
 		    }
 	    }
-	    
+
 	    for(i=0;i<=maxi;i++){ //Check all clients for data
 	    	    socketfd = clientList[i];
 	    	    if(socketfd <0){
 	    	    	   continue;
 	    	    }
 	    	    if(FD_SET(socketfd,&rset)){
-	    	    	    n = Read(socketfd, &message, sizeof(message));
+	    	    	    n = read(socketfd, &message, sizeof(message));
 	    	    	    if(n == 0){ //connection closed by client
+	    	    	    	    printf("CLIENT CLOSED CONNECTION 1");
 	    	    	    	    Close(socketfd);
 	    	    	    	    FD_CLR(socketfd,&allset);
 	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
 	    	    	    	    message.status = STATUS_LEAVE;
-	    	    	    	    if(DEBUG){
-	    	    	    	    	    printf("CLIENT CLOSED CONNECTION");
-	    	    	    	    }
 	    	    	    }
 	    	    	    
 	    	    	    switch(message.status){
+	    	    	    case -1:
+	    	    	    	    bzero(&message, sizeof(message));
+	    	    	    	    message.status = -1;
+			    break; 	    
 	    	    	    case 0: 
-	    	    	    	    sprintf(message.text,"has joined the room\n");
+	    	    	    	    sprintf(message.text,"Hello\n");
 	    	    	    	     if((childpid = fork()) == 0){
-	    	    	    	    	    printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	    printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
 	    	    	    	    	    repeatMessage(message);
 	    	    	    	    }
+	    	    	    	    bzero(&message, sizeof(message));
+	    	    	    	    message.status = -1;
 			    break;
 		    	    case 1:
 				    if((childpid = fork()) == 0){
-	    	    	    	    	    printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	    printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
 	    	    	    	    	    repeatMessage(message);
 	    	    	    	    }
+	    	    	    	    bzero(&message, sizeof(message));
+	    	    	    	    message.status = -1;
 	    	    	    case 2:
-	    	    	    	    if(n==0){
-	    	    	    	    	    break;
-	    	    	    	    }else{
-	    	    	    	    	    sprintf(message.text,"has left the room\n");
+	    	    	    	    if(n!=0){
+	    	    	    	    	    sprintf(message.text,"Goodbye\n");
 	    	    	    	    	     if((childpid = fork()) == 0){
-	    	    	    	    	     	printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	     	printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
 	    	    	    	    	    	repeatMessage(message);
 	    	    	    	    	     }
+	    	    	    	    	    printf("CLIENT CLOSED CONNECTION 2");
 	    	    	    	    	    Close(socketfd);
 	    	    	    	    	    FD_CLR(socketfd,&allset);
 	    	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
 	    	    	    	    }
+	    	    	    	    bzero(&message, sizeof(message));
+	    	    	    	    message.status = -1;
 			    break;
 			    default:
 			    	    printf("Malformed message recieved");
+			    	    bzero(&message, sizeof(message));
 			    break;
 	    	    	    }
-	    	    	    --nready;
-	    	    	    if(nready <=0){
+	    	    	    
+	    	    	    if(--nready<=0){
 	    	    	    	    break;
 	    	    	    }//no more readable FDs
     	    	    
+	    	    bzero(&message, sizeof(message));
+	    	    message.status = -1;
 	    	    }//END IF
-
     	    }//END FOR
     	    
     }//END while
