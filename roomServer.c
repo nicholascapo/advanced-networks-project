@@ -45,8 +45,8 @@ int main(int argc, char* argv[]) {
     int listenfd;
     struct sockaddr_in serverAddress;
 
-       
-    
+
+
     //Check Argc for correct requirements
     checkArgc(argc);
 
@@ -81,7 +81,8 @@ void checkArgc(int argc) {
 //  #######################################################
 // Creates connection and returns a FD.
 //  #######################################################
-int createConnection(char* argv[]){
+
+int createConnection(char* argv[]) {
     int socketfd;
     int x;
     roomPort = atoi(argv[1]);
@@ -97,23 +98,24 @@ int createConnection(char* argv[]){
 
     //Setup and Bind to port and Listen
     socketfd = Socket(AF_INET, roomType, 0);
-    x=fcntl(socketfd,F_GETFL,0);
-    fcntl(socketfd,F_SETFL,x | O_NONBLOCK);
-	
-return socketfd;	
+    x = fcntl(socketfd, F_GETFL, 0);
+    fcntl(socketfd, F_SETFL, x | O_NONBLOCK);
+
+    return socketfd;
 }
 //  #######################################################
 // Creates the serverAddress struct
 //  #######################################################
-struct sockaddr_in setupAddress(){
-struct sockaddr_in serverAddress;
 
-bzero(&serverAddress, sizeof (serverAddress));
+struct sockaddr_in setupAddress() {
+    struct sockaddr_in serverAddress;
+
+    bzero(&serverAddress, sizeof (serverAddress));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     serverAddress.sin_port = htons(roomPort);
 
-return serverAddress;	
+    return serverAddress;
 }
 
 //  #######################################################
@@ -161,7 +163,7 @@ void notifyRegServer(int message) {
 //#######################################################
 
 void mainLoop(int listenfd) {
-	//code from page 178
+    //code from page 178
     int clientfd;
     int socketfd;
     int i;
@@ -177,123 +179,123 @@ void mainLoop(int listenfd) {
     ChatMessage message;
     int childpid;
 
-    
+
     //initialize socket list
-    for(i = 0; i< MAX_CLIENTS; i++){
-    	    clientList[i] = SOCKET_NOT_CONNECTED;
+    for (i = 0; i < MAX_CLIENTS; i++) {
+        clientList[i] = SOCKET_NOT_CONNECTED;
     }
     FD_ZERO(&allset);
     FD_SET(listenfd, &allset);
-    
+
     //code from book page 179
-    if(DEBUG){
-    printf("Entering While Loop\n");	    
+    if (DEBUG) {
+        printf("Entering While Loop\n");
     }
     while (TRUE) {
-    	    rset = allset;
-    	    
-    	    nready = select(maxfd+1,&rset,NULL,NULL,NULL);
-	    if(nready < 0){
-	    	    if(errno == EINTR){
-	    	    	    continue;
-	    	    }else{
-	    	    	    printf("Select Error\n");
-	    	    }
-	    }
-    	    
-    	    if(FD_ISSET(listenfd, &rset)){//check for new client connection
-    	    	    clientLength = sizeof(clientAddress);
-    	    	    clientfd = Accept(listenfd, (SA*) &clientAddress,&clientLength);
-    	    	    
-    	    	    //If there is a new client
-    	    	    for(i=0;i<MAX_CLIENTS;i++){
-    	    	    	    if(clientList[i] < 0){ //store FD in the next available
-    	    	    	    clientList[i] = clientfd; //save connection descriptor
-    	    	    	    break;//break for loop
-    	    	    	    }//END IF
-    	    	    }//END FOR
-		    if(i == MAX_CLIENTS){
-			    printf("Server is full, cannot connect another");	    
-		    }//END IF
-		    FD_SET(clientfd, &allset); //add FD to set
-		    if(clientfd > maxfd){
-		    	    maxfd = clientfd; //for select
-		    }
-		    if(i > maxi){
-		    	    maxi = i; //max index in client[]
-		    }
-		    
-		    if(--nready<=0){
-		    	    continue; //no more readable FDs
-		    }
-	    }
+        rset = allset;
 
-	    for(i=0;i<=maxi;i++){ //Check all clients for data
-	    	    socketfd = clientList[i];
-	    	    if(socketfd <0){
-	    	    	   continue;
-	    	    }
-	    	    if(FD_SET(socketfd,&rset)){
-	    	    	    n = read(socketfd, &message, sizeof(message));
-	    	    	    if(n == 0){ //connection closed by client
-	    	    	    	    printf("CLIENT CLOSED CONNECTION 1\n");
-	    	    	    	    Close(socketfd);
-	    	    	    	    FD_CLR(socketfd,&allset);
-	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
-	    	    	    	    message.status = STATUS_LEAVE;
-	    	    	    }
-	    	    	    
-	    	    	    switch(message.status){
-	    	    	    case -1:
-	    	    	    	    bzero(&message, sizeof(message));
-	    	    	    	    message.status = -1;
-			    break; 	    
-	    	    	    case 0: 
-	    	    	    	    sprintf(message.text,"Hello\n");
-	    	    	    	     if((childpid = fork()) == 0){
-	    	    	    	    	    printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
-	    	    	    	    	    repeatMessage(message);
-	    	    	    	    }
-	    	    	    	    bzero(&message, sizeof(message));
-	    	    	    	    message.status = -1;
-			    break;
-		    	    case 1:
-				    if((childpid = fork()) == 0){
-	    	    	    	    	    printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
-	    	    	    	    	    repeatMessage(message);
-	    	    	    	    }
-	    	    	    	    bzero(&message, sizeof(message));
-	    	    	    	    message.status = -1;
-	    	    	    case 2:
-	    	    	    	    if(n!=0){
-	    	    	    	    	    sprintf(message.text,"Goodbye\n");
-	    	    	    	    	     if((childpid = fork()) == 0){
-	    	    	    	    	     	printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
-	    	    	    	    	    	repeatMessage(message);
-	    	    	    	    	     }
-	    	    	    	    	    printf("CLIENT CLOSED CONNECTION 2\n");
-	    	    	    	    	    Close(socketfd);
-	    	    	    	    	    FD_CLR(socketfd,&allset);
-	    	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
-	    	    	    	    }
-	    	    	    	    bzero(&message, sizeof(message));
-	    	    	    	    message.status = -1;
-			    break;
-			    default:
-			    	    printf("Malformed message recieved\n");
-			    	    bzero(&message, sizeof(message));
-			    break;
-	    	    	    }
-	    	    	    
-	    	    	    if(--nready<=0){
-	    	    	    	    break;
-	    	    	    }//no more readable FDs
-    	    	    
-	    	    bzero(&message, sizeof(message));
-	    	    message.status = -1;
-	    	    }//END IF
-    	    }//END FOR
-    	    
+        nready = select(maxfd + 1, &rset, NULL, NULL, NULL);
+        if (nready < 0) {
+            if (errno == EINTR) {
+                continue;
+            } else {
+                printf("Select Error\n");
+            }
+        }
+
+        if (FD_ISSET(listenfd, &rset)) {//check for new client connection
+            clientLength = sizeof (clientAddress);
+            clientfd = Accept(listenfd, (SA*) & clientAddress, &clientLength);
+
+            //If there is a new client
+            for (i = 0; i < MAX_CLIENTS; i++) {
+                if (clientList[i] < 0) { //store FD in the next available
+                    clientList[i] = clientfd; //save connection descriptor
+                    break; //break for loop
+                }//END IF
+            }//END FOR
+            if (i == MAX_CLIENTS) {
+                printf("Server is full, cannot connect another\n");
+            }//END IF
+            FD_SET(clientfd, &allset); //add FD to set
+            if (clientfd > maxfd) {
+                maxfd = clientfd; //for select
+            }
+            if (i > maxi) {
+                maxi = i; //max index in client[]
+            }
+
+            if (--nready <= 0) {
+                continue; //no more readable FDs
+            }
+        }
+
+        for (i = 0; i <= maxi; i++) { //Check all clients for data
+            socketfd = clientList[i];
+            if (socketfd < 0) {
+                continue;
+            }
+            if (FD_SET(socketfd, &rset)) {
+                n = read(socketfd, &message, sizeof (message));
+                if (n == 0) { //connection closed by client
+                    printf("CLIENT CLOSED CONNECTION 1\n");
+                    Close(socketfd);
+                    FD_CLR(socketfd, &allset);
+                    clientList[i] = SOCKET_NOT_CONNECTED;
+                    message.status = STATUS_LEAVE;
+                }
+
+                switch (message.status) {
+                    case -1:
+                        bzero(&message, sizeof (message));
+                        message.status = -1;
+                        break;
+                    case 0:
+                        sprintf(message.text, "Hello\n");
+                        if ((childpid = fork()) == 0) {
+                            printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+                            repeatMessage(message);
+                        }
+                        bzero(&message, sizeof (message));
+                        message.status = -1;
+                        break;
+                    case 1:
+                        if ((childpid = fork()) == 0) {
+                            printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+                            repeatMessage(message);
+                        }
+                        bzero(&message, sizeof (message));
+                        message.status = -1;
+                    case 2:
+                        if (n != 0) {
+                            sprintf(message.text, "Goodbye\n");
+                            if ((childpid = fork()) == 0) {
+                                printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+                                repeatMessage(message);
+                            }
+                            printf("CLIENT CLOSED CONNECTION 2\n");
+                            Close(socketfd);
+                            FD_CLR(socketfd, &allset);
+                            clientList[i] = SOCKET_NOT_CONNECTED;
+                        }
+                        bzero(&message, sizeof (message));
+                        message.status = -1;
+                        break;
+                    default:
+                        printf("Malformed message recieved\n");
+                        bzero(&message, sizeof (message));
+                        break;
+                }
+
+                if (--nready <= 0) {
+                    break;
+                }//no more readable FDs
+
+                bzero(&message, sizeof (message));
+                message.status = -1;
+            }//END IF
+        }//END FOR
+
     }//END while
 
 }//END mainLoop()
