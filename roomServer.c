@@ -236,7 +236,7 @@ void mainLoop(int listenfd) {
 	    	    if(FD_SET(socketfd,&rset)){
 	    	    	    n = read(socketfd, &message, sizeof(message));
 	    	    	    if(n == 0){ //connection closed by client
-	    	    	    	    printf("CLIENT CLOSED CONNECTION 1");
+	    	    	    	    printf("CLIENT CLOSED CONNECTION 1\n");
 	    	    	    	    Close(socketfd);
 	    	    	    	    FD_CLR(socketfd,&allset);
 	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
@@ -271,7 +271,7 @@ void mainLoop(int listenfd) {
 	    	    	    	    	     	printf("Child Process #%d sending:%s %s\n",getpid(),message.user,message.text);
 	    	    	    	    	    	repeatMessage(message);
 	    	    	    	    	     }
-	    	    	    	    	    printf("CLIENT CLOSED CONNECTION 2");
+	    	    	    	    	    printf("CLIENT CLOSED CONNECTION 2\n");
 	    	    	    	    	    Close(socketfd);
 	    	    	    	    	    FD_CLR(socketfd,&allset);
 	    	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
@@ -280,7 +280,7 @@ void mainLoop(int listenfd) {
 	    	    	    	    message.status = -1;
 			    break;
 			    default:
-			    	    printf("Malformed message recieved");
+			    	    printf("Malformed message recieved\n");
 			    	    bzero(&message, sizeof(message));
 			    break;
 	    	    	    }
