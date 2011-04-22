@@ -181,14 +181,18 @@ void mainLoop(int listenfd) {
     FD_SET(listenfd, &allset);
     
     //code from book page 179
+    if(DEBUG){
+    printf("Entering While Loop\n");	    
+    }
     while (TRUE) { 
     	    rset = allset;
     	    nready = select(maxfd+1,&rset,NULL,NULL,NULL);
     	    
-    	    if(FD_ISSET(listenfd, &rset)){//new client connection
+    	    if(FD_ISSET(listenfd, &rset)){//check for new client connection
     	    	    clientLength = sizeof(clientAddress);
     	    	    clientfd = Accept(listenfd, (SA*) &clientAddress,&clientLength);
     	    	    
+    	    	    //If there is a new client
     	    	    for(i=0;i<MAX_CLIENTS;i++){
     	    	    	    if(clientList[i] < 0){ //store FD in the next available
     	    	    	    clientList[i] = clientfd; //save connection descriptor
@@ -205,7 +209,7 @@ void mainLoop(int listenfd) {
 		    if(i > maxi){
 		    	    maxi = i; //max index in client[]
 		    }
-		    nready--;
+		    --nready;
 		    if(nready <=0){
 		    	    continue; //no more readable FDs
 		    }
@@ -228,7 +232,7 @@ void mainLoop(int listenfd) {
 	    	    	    	    //Just prints to command line for now
 	    	    	    	    printf("%s\n",buffer);
 	    	    	    }
-	    	    	    nready--;
+	    	    	    --nready;
 	    	    	    if(nready <=0){
 	    	    	    	    break;
 	    	    	    }//no more readable FDs
