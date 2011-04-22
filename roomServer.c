@@ -35,7 +35,7 @@ int regServerPort;
 // PROTOTYPES #######################################################
 void checkArgc(int argc);
 void mainLoop(int listenfd);
-void repeatMessage(int connfd);
+void repeatMessage(ChatMessage message);
 void notifyRegServer(int message);
 int createConnection(char* argv[]);
 struct sockaddr_in setupAddress();
@@ -169,9 +169,12 @@ void mainLoop(int listenfd) {
     char buffer[MAX_MESSAGE_TEXT];
     int maxfd = listenfd;
     int maxi = -1;
+    ChatMessage message;
+    int childpid;
     
+    //initialize socket list
     for(i = 0; i< MAX_CLIENTS; i++){
-    	    clientList[i] = -1;
+    	    clientList[i] = SOCKET_NOT_CONNECTED;
     }
     FD_ZERO(&allset);
     FD_SET(listenfd, &allset);
@@ -217,16 +220,47 @@ void mainLoop(int listenfd) {
 	    	    	   continue;
 	    	    }
 	    	    if(FD_SET(socketfd,&rset)){
-	    	    	    n = Read(socketfd, buffer,MAX_MESSAGE_TEXT);
+	    	    	    n = Read(socketfd, &message, sizeof(message));
 	    	    	    if(n == 0){ //connection closed by client
 	    	    	    	    Close(socketfd);
 	    	    	    	    FD_CLR(socketfd,&allset);
-	    	    	    	    clientList[i] = -1;
-	    	    	    }else{
-	    	    	    	    //PERFORM WRITE FUNCTIONS
-	    	    	    	    //START FORK OPERATION HERE
-	    	    	    	    //Just prints to command line for now
-	    	    	    	    printf("%s\n",buffer);
+	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
+	    	    	    	    message.status = STATUS_LEAVE;
+	    	    	    	    if(DEBUG){
+	    	    	    	    	    printf("CLIENT CLOSED CONNECTION");
+	    	    	    	    }
+	    	    	    }
+	    	    	    
+	    	    	    switch(message.status){
+	    	    	    case 0: 
+	    	    	    	    sprintf(message.text,"has joined the room\n");
+	    	    	    	     if((childpid = fork()) == 0){
+	    	    	    	    	    printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	    repeatMessage(message);
+	    	    	    	    }
+			    break;
+		    	    case 1:
+				    if((childpid = fork()) == 0){
+	    	    	    	    	    printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	    repeatMessage(message);
+	    	    	    	    }
+	    	    	    case 2:
+	    	    	    	    if(n==0){
+	    	    	    	    	    break;
+	    	    	    	    }else{
+	    	    	    	    	    sprintf(message.text,"has left the room\n");
+	    	    	    	    	     if((childpid = fork()) == 0){
+	    	    	    	    	     	printf("Child Process #%d sending: %s\n",getpid(),message.text);
+	    	    	    	    	    	repeatMessage(message);
+	    	    	    	    	     }
+	    	    	    	    	    Close(socketfd);
+	    	    	    	    	    FD_CLR(socketfd,&allset);
+	    	    	    	    	    clientList[i] = SOCKET_NOT_CONNECTED;
+	    	    	    	    }
+			    break;
+			    default:
+			    	    printf("Malformed message recieved");
+			    break;
 	    	    	    }
 	    	    	    --nready;
 	    	    	    if(nready <=0){
@@ -245,11 +279,8 @@ void mainLoop(int listenfd) {
 //  Sends message to all connected clients
 //#######################################################
 
-void repeatMessage(int connfd) {
-    ChatMessage message;
+void repeatMessage(ChatMessage message) {
     int i;
-
-    Read(connfd, &message, sizeof (message));
 
     for (i = 0; i < MAX_CLIENTS; i++) {
         if (clientList[i] == SOCKET_NOT_CONNECTED) {
@@ -258,4 +289,5 @@ void repeatMessage(int connfd) {
             Write(clientList[i], &message, sizeof (message));
         }//END if/else
     }//END for
+    exit(1);
 }//END sendMessage()
