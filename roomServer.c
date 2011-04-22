@@ -179,13 +179,12 @@ void mainLoop(int listenfd) {
     int maxfd = listenfd;
     int maxi = -1;
     ChatMessage message;
-    int childpid;
-
 
     //initialize socket list
     for (i = 0; i < MAX_CLIENTS; i++) {
         clientList[i] = SOCKET_NOT_CONNECTED;
     }
+
     FD_ZERO(&allset);
     FD_SET(listenfd, &allset);
 
@@ -237,6 +236,7 @@ void mainLoop(int listenfd) {
             if (socketfd < 0) {
                 continue;
             }
+
             if (FD_SET(socketfd, &rset)) {
                 n = read(socketfd, &message, sizeof (message));
                 if (n == 0) { //connection closed by client
@@ -252,34 +252,25 @@ void mainLoop(int listenfd) {
                         bzero(&message, sizeof (message));
                         message.status = -1;
                         break;
-                    case 0:
+                    case STATUS_JOIN:
                         sprintf(message.text, "Hello\n");
-                        if ((childpid = fork()) == 0) {
-                            printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
-                            repeatMessage(message);
-                        }
+                        repeatMessage(message);
                         bzero(&message, sizeof (message));
                         message.status = -1;
                         break;
-                    case 1:
-                        if ((childpid = fork()) == 0) {
-                            printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
-                            repeatMessage(message);
-                        }
+                    case STATUS_ONLINE:
+                        repeatMessage(message);
                         bzero(&message, sizeof (message));
                         message.status = -1;
-                    case 2:
+                    case STATUS_LEAVE:
                         if (n != 0) {
                             sprintf(message.text, "Goodbye\n");
-                            if ((childpid = fork()) == 0) {
-                                printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
-                                repeatMessage(message);
-                            }
+                            repeatMessage(message);
                             printf("CLIENT CLOSED CONNECTION 2\n");
                             Close(socketfd);
                             FD_CLR(socketfd, &allset);
                             clientList[i] = SOCKET_NOT_CONNECTED;
-                        }
+                        }//END if
                         bzero(&message, sizeof (message));
                         message.status = -1;
                         break;
@@ -287,7 +278,7 @@ void mainLoop(int listenfd) {
                         printf("Malformed message recieved\n");
                         bzero(&message, sizeof (message));
                         break;
-                }
+                }//END switch
 
                 if (--nready <= 0) {
                     break;
@@ -308,13 +299,24 @@ void mainLoop(int listenfd) {
 
 void repeatMessage(ChatMessage message) {
     int i;
+    int childpid;
 
-    for (i = 0; i < MAX_CLIENTS; i++) {
-        if (clientList[i] == SOCKET_NOT_CONNECTED) {
-            continue;
-        } else {
-            Write(clientList[i], &message, sizeof (message));
-        }//END if/else
-    }//END for
-    exit(1);
+    childpid = fork();
+    if (childpid == 0) {
+        //CHILD
+        printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+
+        for (i = 0; i < MAX_CLIENTS; i++) {
+            if (clientList[i] == SOCKET_NOT_CONNECTED) {
+                continue;
+            } else {
+                Write(clientList[i], &message, sizeof (message));
+            }//END if/else
+        }//END for
+        exit(1);
+    } else {
+        //PARENT
+        return;
+    }//END if/else
 }//END sendMessage()
+
