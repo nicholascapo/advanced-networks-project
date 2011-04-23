@@ -103,7 +103,9 @@ void processConnections(int listenfd) {
         //If I were to use pThreads I would need a thread-safe Array or storage of some kind.
         Read(connfd, &request, sizeof (request));
 
-        printf("Read Request: %d, %s, %s, %d\n", request.type, request.record.name, request.record.address, request.record.port);
+        if (DEBUG) {
+            printf("Read Request: %d, %s, %s, %d\n", request.type, request.record.name, request.record.address, request.record.port);
+        }
 
         if (request.type == ROOM_QUERY) {
             int pid;
@@ -111,7 +113,9 @@ void processConnections(int listenfd) {
             // other operations should be almost atomic and not delay other clients
             pid = Fork();
             if (pid == 0) {
-                printf("Child process #%d has accepted a TCP connection\n", getpid());
+                if (DEBUG) {
+                    printf("Child process #%d has accepted a TCP connection\n", getpid());
+                }
                 Close(listenfd);
                 displayConnectionInfo(connfd);
                 sendRoomList(connfd);
@@ -184,8 +188,8 @@ void registerRoom(int connfd, RoomRecord* room) {
         printf("Adding Room: %s\n", room->name);
 
         //lookup the peername ip and use that instead of what the roomServer may (or may not) have given us, see Issue #10
-        Getpeername(connfd, (struct sockaddr*)&sa, &len);
-        memcpy(room->address, inet_ntoa(sa.sin_addr), sizeof(room->address));
+        Getpeername(connfd, (struct sockaddr*) &sa, &len);
+        memcpy(room->address, inet_ntoa(sa.sin_addr), sizeof (room->address));
 
         roomList[roomCount] = *room;
         roomCount++;
