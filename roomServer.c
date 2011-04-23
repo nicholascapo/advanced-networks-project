@@ -3,15 +3,7 @@
  * Course: COSC 4653 - Advanced Networks
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: roomServer.c
- * Purpose: Create a chat room that will accept TCP and UDP connections
- * Usage: Usage: roomServer.exe <port> <registration server IP> <registration server port> <Room Name>
- *
- * Limitations: 
- * Development Computer: x86
- * Operating System: Ubuntu Linux 10.04
- * Integrated Development Environment (IDE): Netbeans 6.9.1
- * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
- * Operational Status: Compiles, no functions yet.
+ * Purpose: Provides a chat room for multiple clients
  **/
 
 //INCLUDES ##########################################################
@@ -257,7 +249,7 @@ void mainLoop(int listenfd) {
                         repeatMessage(message);
                         break;
                     case STATUS_ONLINE:
-                    	debug("CLIENT SENDING MESSAGE");
+                        debug("CLIENT SENDING MESSAGE");
                         repeatMessage(message);
                         break;
                     case STATUS_LEAVE:
@@ -299,8 +291,8 @@ void repeatMessage(ChatMessage message) {
     childpid = fork();
     if (childpid == 0) {
         //CHILD
-        if(DEBUG){
-        	printf("DEBUG: Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+        if (DEBUG) {
+            printf("DEBUG: Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
         }
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (clientList[i] != SOCKET_NOT_CONNECTED) {

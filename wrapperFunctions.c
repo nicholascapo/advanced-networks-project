@@ -4,14 +4,6 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: wrapperFunctions.c
  * Purpose: Provides transparant error checking wrapper functions for use in a C networking project
- * Usage: None
- *
- * Limitations: 
- * Development Computer: x86
- * Operating System: Ubuntu Linux 10.04
- * Integrated Development Environment (IDE): Netbeans 6.9.1
- * Compiler: gcc (Ubuntu 4.4.3-4ubuntu5) 4.4.3
- * Operational Status: Compiles
  **/
 
 //##############################################################
@@ -412,6 +404,7 @@ int Kill(pid_t pid, int sig) {
     return status;
 }//END Kill()
 //##############################################################
+
 void debug(char * message) {
     if (DEBUG) {
         printf("DEBUG: %s\n", message);
