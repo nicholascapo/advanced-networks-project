@@ -74,8 +74,8 @@ int main(int argc, char* argv[]) {
 //#############################################################################
 
 void checkArgc(int argc) {
-    if (argc != 6) {
-        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <TCP/UDP  (<1/0>)> <\"roomName\">\n");
+	if (argc != 5) {
+        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <\"roomName\">\n");
         exit(1);
     } // End if
 }//end checkArgc()
@@ -90,13 +90,14 @@ int createConnection(char* argv[]) {
     roomPort = atoi(argv[1]);
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);
-    if (atoi(argv[4]) == TRUE) {//TCP
-        roomType = SOCK_STREAM;
-    } else {//UDP
-        roomType = SOCK_DGRAM;
-    }//END if/else
+     //UDP is not supported at this time
+    //if (atoi(argv[4]) == TRUE) {//TCP
+    roomType = SOCK_STREAM;
+    //} else {//UDP
+    //    roomType = SOCK_DGRAM;
+    //}//END if/else
 
-    roomName = argv[5];
+    roomName = argv[4];
 
     //Setup and Bind to port and Listen
     socketfd = Socket(AF_INET, roomType, 0);
