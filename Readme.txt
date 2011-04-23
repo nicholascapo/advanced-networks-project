@@ -5,7 +5,15 @@
 3. ASSIGNMENT: #8 - Two Unique Servers
 
 4. APPLICATION DESCRIPTION:
-	****Two or more paragraphs describing what your application does overall and what each client and server program does.****
+	A set of applications for operating a series of chat rooms.
+	Clients must only know the address and port of the central registration server in order to get a list of all available rooms, and connect to a room.
+	Once a client has joined a room, he is then able to join the chat already in progress and can see messages sent from every other client.
+
+	Clients may use the special message "/quit" to leave the room and exit the program.
+
+	On the back end, a single Registration server must be setup to provide a "directory" service for Rooms.
+
+	Rooms can be run by anyone on an accessible network, the room must register with a registration server and then clients will be able to connect to it.
 
 5. SOURCE CODE FILES:
 	1. registrationServer.c
@@ -25,17 +33,17 @@
 	3. Run 1-n Clients, providing the Address and port of the Registration Server, and a nickname for your user
 		client.exe <regSrv IP> <regSrv Port> <Nickname>
 
-8. OPERATIONAL STATUS:****STATUS****
+8. OPERATIONAL STATUS: COMPLETE
 
-	Registration Server: ****STATUS****
-		****BUGS****
-		* It is possible for a Room Server to cause the Registration Server to block forever, this is because the room server cannot fork during a Registration or a De-registration Event. It does however fork for client connections.
-		*
+	Registration Server: COMPLETE
+		* It is possible for a Room Server to cause the Registration Server to block forever,
+			this is because the room server cannot fork during a Registration or a De-registration Event. It does however fork for client connections.
 			
-	Room Server:****STATUS****
-		* Multi-Homeing of Room Servers has not been tested and is not expected to be reliable. The Room Server IP Address it determined based on the Registration Connection from the Room Server to the Registration Server, multi-homeing may make this unreliable.
-		* 
-	Client:****STATUS****
+	Room Server: COMPLETE
+		* Multi-Homeing of Room Servers has not been tested and is not expected to be reliable.
+			The Room Server IP Address it determined based on the Registration Connection from the Room Server to the Registration Server,
+			multi-homeing may make this unreliable.
+		* UDP Room Servers are Not supported at this time, although it should not be difficult to implement.
+
+	Client: COMPLETE
 		*
-		
-		
