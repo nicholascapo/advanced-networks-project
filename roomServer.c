@@ -189,9 +189,8 @@ void mainLoop(int listenfd) {
     FD_SET(listenfd, &allset);
 
     //code from book page 179
-    if (DEBUG) {
-        printf("Entering While Loop\n");
-    }
+    debug("Entering While Loop");
+
     while (TRUE) {
         rset = allset;
 
@@ -212,16 +211,16 @@ void mainLoop(int listenfd) {
             for (i = 0; i < MAX_CLIENTS; i++) {
                 if (clientList[i] == SOCKET_NOT_CONNECTED){ //store FD in the next available
                     clientList[i] = clientfd; //save connection descriptor
-                   
+
                     break; //break for loop
                 }//END IF
             }//END FOR
             if (i == MAX_CLIENTS) {
                 printf("Server is full, cannot connect another\n");
             }//END IF
-             if(i > maxi) {
-		    maxi = i; //max index in client[]
-	    }
+            if (i > maxi) {
+                maxi = i; //max index in client[]
+            }
             FD_SET(clientfd, &allset); //add FD to set
             if (clientfd > maxfd) {
                 maxfd = clientfd; //for select
@@ -249,7 +248,7 @@ void mainLoop(int listenfd) {
 
                 switch (message.status) {
                     case STATUS_JOIN:
-                        sprintf(message.text, "Welcome %s\n",message.user);
+                        sprintf(message.text, "Welcome %s\n", message.user);
                         sprintf(message.user, "SERVER");
                         repeatMessage(message);
                         break;
@@ -258,8 +257,8 @@ void mainLoop(int listenfd) {
                         break;
                     case STATUS_LEAVE:
                         if (n != 0) {
-                        sprintf(message.text, "Goodbye %s\n",message.user);
-                        sprintf(message.user, "SERVER");
+                            sprintf(message.text, "Goodbye %s\n", message.user);
+                            sprintf(message.user, "SERVER");
                             repeatMessage(message);
                             printf("CLIENT CLOSED CONNECTION 2\n");
                             Close(socketfd);
@@ -299,7 +298,7 @@ void repeatMessage(ChatMessage message) {
 
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (clientList[i] != SOCKET_NOT_CONNECTED) {
-            	    write(clientList[i], &message, sizeof (message));
+                write(clientList[i], &message, sizeof (message));
             }//END if/else
         }//END for
         exit(1);
