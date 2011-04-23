@@ -49,7 +49,6 @@ int main(int argc, char* argv[]) {
     //Check Argc for correct requirements
     checkArgc(argc);
 
-    useStandardSignalHandlers();
     listenfd = createConnection(argv);
     serverAddress = setupAddress();
 
@@ -238,7 +237,7 @@ void mainLoop(int listenfd) {
             if (FD_ISSET(socketfd, &rset)) {
                 n = read(socketfd, &message, sizeof (message));
                 if (n == 0) { //connection closed by client
-                    printf("CLIENT CLOSED CONNECTION 1\n");
+                    debug("CLIENT CLOSED CONNECTION 1");
                     Close(socketfd);
                     FD_CLR(socketfd, &allset);
                     clientList[i] = SOCKET_NOT_CONNECTED;
@@ -249,9 +248,11 @@ void mainLoop(int listenfd) {
                     case STATUS_JOIN:
                         sprintf(message.text, "Welcome %s\n", message.user);
                         sprintf(message.user, "SERVER");
+                        debug("CLIENT JOINED SERVER");
                         repeatMessage(message);
                         break;
                     case STATUS_ONLINE:
+                    	debug("CLIENT SENDING MESSAGE");
                         repeatMessage(message);
                         break;
                     case STATUS_LEAVE:
@@ -259,7 +260,7 @@ void mainLoop(int listenfd) {
                             sprintf(message.text, "Goodbye %s\n", message.user);
                             sprintf(message.user, "SERVER");
                             repeatMessage(message);
-                            printf("CLIENT CLOSED CONNECTION 2\n");
+                            debug("CLIENT LEFT SERVER");
                             Close(socketfd);
                             FD_CLR(socketfd, &allset);
                             clientList[i] = SOCKET_NOT_CONNECTED;
@@ -293,8 +294,9 @@ void repeatMessage(ChatMessage message) {
     childpid = fork();
     if (childpid == 0) {
         //CHILD
-        printf("Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
-
+        if(DEBUG){
+        	printf("DEBUG: Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
+        }
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (clientList[i] != SOCKET_NOT_CONNECTED) {
                 write(clientList[i], &message, sizeof (message));
