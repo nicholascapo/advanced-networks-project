@@ -39,6 +39,7 @@ void repeatMessage(ChatMessage message);
 void notifyRegServer(int message);
 int createConnection(char* argv[]);
 struct sockaddr_in setupAddress();
+void handleSigTermWithDereg(int signo);
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
@@ -48,6 +49,10 @@ int main(int argc, char* argv[]) {
 
     //Check Argc for correct requirements
     checkArgc(argc);
+
+    SigAction(SIGTERM, handleSigTermWithDereg);
+    SigAction(SIGCHLD, handleSigChld);
+    SigAction(SIGPIPE, handleSigPipe);
 
     listenfd = createConnection(argv);
     serverAddress = setupAddress();
@@ -308,4 +313,16 @@ void repeatMessage(ChatMessage message) {
         return;
     }//END if/else
 }//END sendMessage()
+
+//#######################################################
+//  Handles SIGTERM and de-registers the Room
+//#######################################################
+
+void handleSigTermWithDereg(int signo) {
+    printf("Caught SIGTERM: Exiting\n");
+    notifyRegServer(REGISTER_LEAVE);
+    cleanup();
+}//END handleSigTerm()
+
+//######################################################
 
