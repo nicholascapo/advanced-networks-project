@@ -207,10 +207,10 @@ void mainLoop(int listenfd) {
         if (FD_ISSET(listenfd, &rset)) {//check for new client connection
             clientLength = sizeof (clientAddress);
             clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
-
+                   
             //If there is a new client
             for (i = 0; i < MAX_CLIENTS; i++) {
-                if (clientList[i] == SOCKET_NOT_CONNECTED) { //store FD in the next available
+                if (clientList[i] == SOCKET_NOT_CONNECTED){ //store FD in the next available
                     clientList[i] = clientfd; //save connection descriptor
                    
                     break; //break for loop
@@ -248,21 +248,13 @@ void mainLoop(int listenfd) {
                 }
 
                 switch (message.status) {
-                    case -1:
-                        bzero(&message, sizeof (message));
-                        message.status = -1;
-                        break;
                     case STATUS_JOIN:
                         sprintf(message.text, "Welcome %s\n",message.user);
                         sprintf(message.user, "SERVER");
                         repeatMessage(message);
-                        bzero(&message, sizeof (message));
-                        message.status = -1;
                         break;
                     case STATUS_ONLINE:
                         repeatMessage(message);
-                        bzero(&message, sizeof (message));
-                        message.status = -1;
                         break;
                     case STATUS_LEAVE:
                         if (n != 0) {
@@ -274,12 +266,8 @@ void mainLoop(int listenfd) {
                             FD_CLR(socketfd, &allset);
                             clientList[i] = SOCKET_NOT_CONNECTED;
                         }//END if
-                        bzero(&message, sizeof (message));
-                        message.status = -1;
                         break;
                     default:
-                        printf("Malformed message recieved\n");
-                        bzero(&message, sizeof (message));
                         break;
                 }//END switch
 
