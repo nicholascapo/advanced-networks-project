@@ -226,7 +226,7 @@ void userOutput(int socketfd) {
                 Kill(getppid(), SIGTERM);
                 break;
             }
-            printf("%s : %s\n", message.user, message.text);
+            printf("%s : %s", message.user, message.text);
         }
         bzero(&message, sizeof (message));
     }//END while
@@ -252,7 +252,7 @@ void userInput(int socketfd, char* username) {
             debug("Got Quit Command");
             break;
         }//END if
-        sprintf(message.text, "%s\n", text);
+        sprintf(message.text, "%s", text);
         //strncpy(message.text, text, MAX_MESSAGE_TEXT);
 
         Write(socketfd, &message, sizeof (message));
