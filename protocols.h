@@ -19,8 +19,6 @@
 
 #include <netinet/in.h>
 
-#define TRUE 1
-#define FALSE 0
 #define SOCKET_NOT_CONNECTED -1
 
 #define MAX_USER_ID_LENGTH 30
