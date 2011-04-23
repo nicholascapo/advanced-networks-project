@@ -291,9 +291,7 @@ void repeatMessage(ChatMessage message) {
     childpid = fork();
     if (childpid == 0) {
         //CHILD
-        if (DEBUG) {
-            printf("DEBUG: Child Process #%d sending:%s %s\n", getpid(), message.user, message.text);
-        }
+        printf("LOG: %s: %s", message.user, message.text);
         for (i = 0; i < MAX_CLIENTS; i++) {
             if (clientList[i] != SOCKET_NOT_CONNECTED) {
                 write(clientList[i], &message, sizeof (message));
