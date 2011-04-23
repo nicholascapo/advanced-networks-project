@@ -414,18 +414,17 @@ void debug(char * message) {
 //##############################################################
 
 void displayConnectionInfo(int socket) {
-    if (DEBUG) {
-        struct sockaddr_in sa;
-        socklen_t len;
+    struct sockaddr_in sa;
+    socklen_t len;
 
-        len = sizeof (sa);
+    len = sizeof (sa);
 
-        Getsockname(socket, (struct sockaddr *) &sa, &len);
-        printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+    Getsockname(socket, (struct sockaddr *) &sa, &len);
+    printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
 
-        Getpeername(socket, (struct sockaddr *) &sa, &len);
-        printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
-    }//END if
+    Getpeername(socket, (struct sockaddr *) &sa, &len);
+    printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+
 }//END displayConnectionInfo()
 
 //##############################################################
@@ -492,7 +491,7 @@ int makeConnection(int sockType, char* ipAddress, int port) {
 //#############################################################################
 
 void handleSigTerm(int signo) {
-    printf("Caught SIGTERM: Exiting\n");
+    debug("Caught SIGTERM: Exiting\n");
     cleanup();
 }//END handleSigTerm()
 
@@ -504,7 +503,9 @@ void handleSigChld(int signo) {
     pid = waitpid(-1, &stat, WNOHANG);
 
     while (pid > 0) {
-        printf("Child #%d Terminated\n", pid);
+        if (DEBUG) {
+            printf("Child #%d Terminated\n", pid);
+        }
         return;
     }//END while
 }//END handlerSigChld()
@@ -512,7 +513,7 @@ void handleSigChld(int signo) {
 //#############################################################################
 
 void handleSigPipe(int signno) {
-    printf("Broken Pipe: Exiting\n");
+    debug("Broken Pipe: Exiting\n");
     cleanup();
 }//END handleSigPipe()
 
