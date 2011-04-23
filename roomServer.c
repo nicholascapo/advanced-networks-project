@@ -176,7 +176,6 @@ void mainLoop(int listenfd) {
     socklen_t clientLength;
     struct sockaddr_in clientAddress;
     ssize_t n;
-    char buffer[MAX_MESSAGE_TEXT];
     int maxfd = listenfd;
     int maxi = -1;
     ChatMessage message;
