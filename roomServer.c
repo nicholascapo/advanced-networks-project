@@ -74,8 +74,8 @@ int main(int argc, char* argv[]) {
 //#############################################################################
 
 void checkArgc(int argc) {
-    if (argc != 6) {
-        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <TCP/UDP  (<1/0>)> <\"roomName\">\n");
+    if (argc != 5) {
+        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <\"roomName\">\n");
         exit(1);
     } // End if
 }//end checkArgc()
@@ -90,13 +90,15 @@ int createConnection(char* argv[]) {
     roomPort = atoi(argv[1]);
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);
-    if (atoi(argv[4]) == TRUE) {//TCP
-        roomType = SOCK_STREAM;
-    } else {//UDP
-        roomType = SOCK_DGRAM;
-    }//END if/else
 
-    roomName = argv[5];
+    //UDP is not supported at this time
+    //if (atoi(argv[4]) == TRUE) {//TCP
+    roomType = SOCK_STREAM;
+    //} else {//UDP
+    //    roomType = SOCK_DGRAM;
+    //}//END if/else
+
+    roomName = argv[4];
 
     //Setup and Bind to port and Listen
     socketfd = Socket(AF_INET, roomType, 0);
@@ -171,6 +173,7 @@ void mainLoop(int listenfd) {
     int i;
     int nready;
     fd_set rset;
+    fd_set allset;
     socklen_t clientLength;
     struct sockaddr_in clientAddress;
     ssize_t n;
@@ -184,15 +187,16 @@ void mainLoop(int listenfd) {
         clientList[i] = SOCKET_NOT_CONNECTED;
     }
 
-    FD_ZERO(&rset);
-    FD_SET(listenfd, &rset);
+    FD_ZERO(&allset);
+    FD_SET(listenfd, &allset);
 
     //code from book page 179
     debug("Entering While Loop");
 
     while (TRUE) {
-        FD_ZERO(&rset);
-        FD_SET(listenfd, &rset);
+        rset = allset;
+
+        debug("SELECT");
         nready = select(maxfd + 1, &rset, NULL, NULL, NULL);
         if (nready < 0) {
             if (errno == EINTR) {
@@ -205,12 +209,11 @@ void mainLoop(int listenfd) {
         if (FD_ISSET(listenfd, &rset)) {//check for new client connection
             clientLength = sizeof (clientAddress);
             clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
-                   
+
             //If there is a new client
             for (i = 0; i < MAX_CLIENTS; i++) {
-                if (clientList[i] == SOCKET_NOT_CONNECTED){ //store FD in the next available
+                if (clientList[i] == SOCKET_NOT_CONNECTED) { //store FD in the next available
                     clientList[i] = clientfd; //save connection descriptor
-
                     break; //break for loop
                 }//END IF
             }//END FOR
@@ -220,7 +223,7 @@ void mainLoop(int listenfd) {
             if (i > maxi) {
                 maxi = i; //max index in client[]
             }
-            FD_SET(clientfd, &rset); //add FD to set
+            FD_SET(clientfd, &allset); //add FD to set
             if (clientfd > maxfd) {
                 maxfd = clientfd; //for select
             }
@@ -240,7 +243,7 @@ void mainLoop(int listenfd) {
                 if (n == 0) { //connection closed by client
                     printf("CLIENT CLOSED CONNECTION 1\n");
                     Close(socketfd);
-                    FD_CLR(socketfd, &rset);
+                    FD_CLR(socketfd, &allset);
                     clientList[i] = SOCKET_NOT_CONNECTED;
                     message.status = STATUS_LEAVE;
                 }
@@ -261,7 +264,7 @@ void mainLoop(int listenfd) {
                             repeatMessage(message);
                             printf("CLIENT CLOSED CONNECTION 2\n");
                             Close(socketfd);
-                            FD_CLR(socketfd, &rset);
+                            FD_CLR(socketfd, &allset);
                             clientList[i] = SOCKET_NOT_CONNECTED;
                         }//END if
                         break;
