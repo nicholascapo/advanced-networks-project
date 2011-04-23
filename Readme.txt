@@ -28,9 +28,9 @@
 7. RUN DIRECTIONS:
 	1. Run the Registration Server:
 		registrationserver.exe <port>
-	2. Run 1-n Room Servers, each with unique Port numbers and unique Room Names:
+	2. Run 1-MAXROOMS Room Servers, each with unique Port numbers and unique Room Names:
 		roomServer.exe <room Port> <regSrv IP> <regSrv Port> <Room Name>
-	3. Run 1-n Clients, providing the Address and port of the Registration Server, and a nickname for your user
+	3. Run 1-MAXCLIENTS Clients, providing the Address and port of the Registration Server, and a nickname for your user
 		client.exe <regSrv IP> <regSrv Port> <Nickname>
 
 8. OPERATIONAL STATUS: COMPLETE
