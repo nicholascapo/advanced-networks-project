@@ -220,7 +220,10 @@ void userOutput(int socketfd) {
         if (FD_SET(socketfd, &rset)) {
             n = Read(socketfd, &message, sizeof (message));
             if (n == 0) { //connection closed by client
-                printf("CLIENT CLOSED CONNECTION\n");
+                printf("Server closed Connection: Exiting\n");
+                //We will always detect a remote close here sooner than in the parent,
+                // thus when we catch that here, we send the parent a SIGTERM
+                Kill(getppid(), SIGTERM);
                 break;
             }
             printf("%s : %s\n", message.user, message.text);
