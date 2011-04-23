@@ -144,7 +144,7 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
     while (TRUE) {
         connfd = accept(sockfd, addr, addrlen);
         if (errno == EINTR) {
-            break;
+            continue;
         } else if (errno == EWOULDBLOCK) {
             break;
         } else if (errno == ECONNABORTED) {
