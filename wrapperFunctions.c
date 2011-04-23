@@ -421,17 +421,18 @@ void debug(char * message) {
 //##############################################################
 
 void displayConnectionInfo(int socket) {
-    struct sockaddr_in sa;
-    socklen_t len;
+    if (DEBUG) {
+        struct sockaddr_in sa;
+        socklen_t len;
 
-    len = sizeof (sa);
+        len = sizeof (sa);
 
-    Getsockname(socket, (struct sockaddr *) &sa, &len);
-    printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+        Getsockname(socket, (struct sockaddr *) &sa, &len);
+        printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
 
-    Getpeername(socket, (struct sockaddr *) &sa, &len);
-    printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
-
+        Getpeername(socket, (struct sockaddr *) &sa, &len);
+        printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+    }//END if
 }//END displayConnectionInfo()
 
 //##############################################################
