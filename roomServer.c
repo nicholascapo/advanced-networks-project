@@ -271,12 +271,12 @@ void mainLoop(int listenfd) {
                         break;
                 }//END switch
 
+                bzero(&message, sizeof (message));
+                message.status = -1;
                 if (--nready <= 0) {
                     break;
                 }//no more readable FDs
 
-                bzero(&message, sizeof (message));
-                message.status = -1;
             }//END IF
         }//END FOR
 
