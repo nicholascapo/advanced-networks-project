@@ -171,7 +171,7 @@ void mainLoop(int listenfd) {
     int i;
     int nready;
     fd_set rset;
-    fd_set allset;
+    fd_set rset;
     socklen_t clientLength;
     struct sockaddr_in clientAddress;
     ssize_t n;
@@ -185,15 +185,15 @@ void mainLoop(int listenfd) {
         clientList[i] = SOCKET_NOT_CONNECTED;
     }
 
-    FD_ZERO(&allset);
-    FD_SET(listenfd, &allset);
+    FD_ZERO(&rset);
+    FD_SET(listenfd, &rset);
 
     //code from book page 179
     debug("Entering While Loop");
 
     while (TRUE) {
-        rset = allset;
-
+        FD_ZERO(&rset);
+        FD_SET(listenfd, &rset);
         nready = select(maxfd + 1, &rset, NULL, NULL, NULL);
         if (nready < 0) {
             if (errno == EINTR) {
@@ -221,7 +221,7 @@ void mainLoop(int listenfd) {
             if (i > maxi) {
                 maxi = i; //max index in client[]
             }
-            FD_SET(clientfd, &allset); //add FD to set
+            FD_SET(clientfd, &rset); //add FD to set
             if (clientfd > maxfd) {
                 maxfd = clientfd; //for select
             }
@@ -241,7 +241,7 @@ void mainLoop(int listenfd) {
                 if (n == 0) { //connection closed by client
                     printf("CLIENT CLOSED CONNECTION 1\n");
                     Close(socketfd);
-                    FD_CLR(socketfd, &allset);
+                    FD_CLR(socketfd, &rset);
                     clientList[i] = SOCKET_NOT_CONNECTED;
                     message.status = STATUS_LEAVE;
                 }
@@ -262,7 +262,7 @@ void mainLoop(int listenfd) {
                             repeatMessage(message);
                             printf("CLIENT CLOSED CONNECTION 2\n");
                             Close(socketfd);
-                            FD_CLR(socketfd, &allset);
+                            FD_CLR(socketfd, &rset);
                             clientList[i] = SOCKET_NOT_CONNECTED;
                         }//END if
                         break;
