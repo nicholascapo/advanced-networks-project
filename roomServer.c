@@ -171,7 +171,6 @@ void mainLoop(int listenfd) {
     int i;
     int nready;
     fd_set rset;
-    fd_set rset;
     socklen_t clientLength;
     struct sockaddr_in clientAddress;
     ssize_t n;
