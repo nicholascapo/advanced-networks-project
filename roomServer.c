@@ -4,7 +4,7 @@
  * Assignment: PROJECT - Multiserver Chat Rooms in TCP and UDP
  * File name: roomServer.c
  * Purpose: Create a chat room that will accept TCP and UDP connections
- * Usage: Usage: roomServer.exe <port> <registration server IP> <registration server port> <TCP/UDP (<1/0>)> <Room Name>
+ * Usage: Usage: roomServer.exe <port> <registration server IP> <registration server port> <Room Name>
  *
  * Limitations: 
  * Development Computer: x86
@@ -22,7 +22,7 @@
 #define	SA struct sockaddr
 // GLOBALS ##########################################################
 
-//don't cunfuse this with socketList in wrapperFunctions.c, this is only for clients in the chatroom
+//don't confuse this with socketList in wrapperFunctions.c, this is only for clients in the chatroom
 int clientList[MAX_CLIENTS];
 
 char* roomName;
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
 //#############################################################################
 
 void checkArgc(int argc) {
-	if (argc != 5) {
+    if (argc != 5) {
         fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <\"roomName\">\n");
         exit(1);
     } // End if
@@ -90,7 +90,7 @@ int createConnection(char* argv[]) {
     roomPort = atoi(argv[1]);
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);
-     //UDP is not supported at this time
+    //UDP is not supported at this time
     //if (atoi(argv[4]) == TRUE) {//TCP
     roomType = SOCK_STREAM;
     //} else {//UDP
@@ -207,10 +207,10 @@ void mainLoop(int listenfd) {
         if (FD_ISSET(listenfd, &rset)) {//check for new client connection
             clientLength = sizeof (clientAddress);
             clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
-                   
+
             //If there is a new client
             for (i = 0; i < MAX_CLIENTS; i++) {
-                if (clientList[i] == SOCKET_NOT_CONNECTED){ //store FD in the next available
+                if (clientList[i] == SOCKET_NOT_CONNECTED) { //store FD in the next available
                     clientList[i] = clientfd; //save connection descriptor
 
                     break; //break for loop
