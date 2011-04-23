@@ -419,8 +419,12 @@ void displayConnectionInfo(int socket) {
 
     len = sizeof (sa);
 
+    memset(&sa, 0, len);
+
     Getsockname(socket, (struct sockaddr *) &sa, &len);
     printf("(Local Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
+
+    memset(&sa, 0, len);
 
     Getpeername(socket, (struct sockaddr *) &sa, &len);
     printf("(Foreign Node) IP Address: %s, Port: %d\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
