@@ -245,14 +245,15 @@ void userInput(int socketfd, char* username) {
         strncpy(message.user, username, MAX_USER_ID_LENGTH);
         message.status = STATUS_ONLINE;
 
-        scanf("%s", text);
+        gets(text);
+
 
         if (strncmp(text, QUIT_COMMAND, sizeof (QUIT_COMMAND)) == 0) {
             debug("Got Quit Command");
             break;
         }//END if
-
-        strncpy(message.text, text, MAX_MESSAGE_TEXT);
+        sprintf(message.text, "%s\n", text);
+        //strncpy(message.text, text, MAX_MESSAGE_TEXT);
 
         Write(socketfd, &message, sizeof (message));
         bzero(&text, sizeof (text));
