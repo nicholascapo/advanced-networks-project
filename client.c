@@ -166,7 +166,7 @@ void chat(int socketfd, char* username) {
     if (pid == 0) {
         //CHILD
         userOutput(socketfd);
-        printf("ERROR: Child Process Exited Prematurely!!\n");
+        debug("ERROR: Child Process Exited Prematurely!!\n");
         //Only the parent should call cleanup()
         exit(1);
     }//END if
