@@ -188,7 +188,7 @@ void mainLoop(int listenfd) {
 
     FD_ZERO(&allset);
     FD_SET(listenfd, &allset);
-
+    FD_SET(listenfd, &rset);
     //code from book page 179
     debug("Entering While Loop");
 
@@ -212,7 +212,6 @@ void mainLoop(int listenfd) {
             for (i = 0; i < MAX_CLIENTS; i++) {
                 if (clientList[i] == SOCKET_NOT_CONNECTED) { //store FD in the next available
                     clientList[i] = clientfd; //save connection descriptor
-
                     break; //break for loop
                 }//END IF
             }//END FOR
@@ -237,7 +236,7 @@ void mainLoop(int listenfd) {
                 continue;
             }
 
-            if (FD_SET(socketfd, &rset)) {
+            if (FD_ISSET(socketfd, &rset)) {
                 n = read(socketfd, &message, sizeof (message));
                 if (n == 0) { //connection closed by client
                     printf("CLIENT CLOSED CONNECTION 1\n");
