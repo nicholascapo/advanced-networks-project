@@ -245,7 +245,7 @@ void userInput(int socketfd, char* username) {
         strncpy(message.user, username, MAX_USER_ID_LENGTH);
         message.status = STATUS_ONLINE;
 
-        gets(text);
+        fgets(text,MAX_MESSAGE_TEXT,stdin);
 
 
         if (strncmp(text, QUIT_COMMAND, sizeof (QUIT_COMMAND)) == 0) {
