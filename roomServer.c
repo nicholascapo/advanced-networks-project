@@ -53,7 +53,9 @@ int main(int argc, char* argv[]) {
     setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &reuseaddr_value, sizeof (reuseaddr_value));
 
     Bind(listenfd, (struct sockaddr *) &serverAddress, sizeof (serverAddress));
-    Listen(listenfd, MAX_LISTEN_QUEUE_LENGTH);
+    if (roomType == SOCK_STREAM) {
+        Listen(listenfd, MAX_LISTEN_QUEUE_LENGTH);
+    }//END if
 
     //Notify Registration Server
     notifyRegServer(REGISTER_REQUEST);
@@ -70,8 +72,8 @@ int main(int argc, char* argv[]) {
 //#############################################################################
 
 void checkArgc(int argc) {
-    if (argc != 5) {
-        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <\"roomName\">\n");
+    if (argc != 6) {
+        fprintf(stderr, "Usage: roomServer.exe <port> <registration server IP> <registration server port> <TCP/UDP (1/0)> <\"roomName\">\n");
         exit(1);
     } // End if
 }//end checkArgc()
@@ -87,13 +89,13 @@ int createConnection(char* argv[]) {
     regServerAddress = argv[2];
     regServerPort = atoi(argv[3]);
     //UDP is not supported at this time
-    //if (atoi(argv[4]) == TRUE) {//TCP
-    roomType = SOCK_STREAM;
-    //} else {//UDP
-    //    roomType = SOCK_DGRAM;
-    //}//END if/else
+    if (atoi(argv[4]) == TRUE) {//TCP
+        roomType = SOCK_STREAM;
+    } else {//UDP
+        roomType = SOCK_DGRAM;
+    }//END if/else
 
-    roomName = argv[4];
+    roomName = argv[5];
 
     //Setup and Bind to port and Listen
     socketfd = Socket(AF_INET, roomType, 0);
@@ -190,6 +192,7 @@ void mainLoop(int listenfd) {
     while (TRUE) {
         rset = allset;
 
+        debug("SELECT");
         nready = select(maxfd + 1, &rset, NULL, NULL, NULL);
         if (nready < 0) {
             if (errno == EINTR) {
@@ -199,9 +202,17 @@ void mainLoop(int listenfd) {
             }
         }
 
+        debug("ISSET listenfd");
         if (FD_ISSET(listenfd, &rset)) {//check for new client connection
             clientLength = sizeof (clientAddress);
-            clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
+            if (roomType == SOCK_STREAM) {
+                clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
+            } else {
+                //readfrom to get RoomRecord
+                //Socket to create socket
+                // Connect to "bind" it to the client address
+
+            }//END if/else
 
             //If there is a new client
             for (i = 0; i < MAX_CLIENTS; i++) {
