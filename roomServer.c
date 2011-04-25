@@ -15,7 +15,7 @@
 // GLOBALS ##########################################################
 
 //don't confuse this with socketList in wrapperFunctions.c, this is only for clients in the chatroom
-int clientList[MAX_CLIENTS];
+ClientRecord clientList[MAX_CLIENTS];
 
 char* roomName;
 int roomType;
@@ -32,6 +32,7 @@ void notifyRegServer(int message);
 int createConnection(char* argv[]);
 struct sockaddr_in setupAddress();
 void handleSigTermWithDereg(int signo);
+void sendUserList(int socketfd);
 // MAIN #######################################################
 
 int main(int argc, char* argv[]) {
@@ -59,6 +60,8 @@ int main(int argc, char* argv[]) {
 
     //Notify Registration Server
     notifyRegServer(REGISTER_REQUEST);
+
+    memset(clientList, 0, sizeof (clientList));
 
     mainLoop(listenfd);
 
@@ -180,7 +183,7 @@ void mainLoop(int listenfd) {
 
     //initialize socket list
     for (i = 0; i < MAX_CLIENTS; i++) {
-        clientList[i] = SOCKET_NOT_CONNECTED;
+        clientList[i].socket = SOCKET_NOT_CONNECTED;
     }
 
     FD_ZERO(&allset);
@@ -216,8 +219,11 @@ void mainLoop(int listenfd) {
 
             //If there is a new client
             for (i = 0; i < MAX_CLIENTS; i++) {
-                if (clientList[i] == SOCKET_NOT_CONNECTED) { //store FD in the next available
-                    clientList[i] = clientfd; //save connection descriptor
+                if (clientList[i].socket == SOCKET_NOT_CONNECTED) { //store FD in the next available
+                    ClientRecord c;
+                    c.socket = clientfd; //save connection descriptor
+                    strncpy(c.name, message.user, sizeof (c.name));
+                    clientList[i] = c;
                     break; //break for loop
                 }//END IF
             }//END FOR
@@ -237,7 +243,7 @@ void mainLoop(int listenfd) {
         }
 
         for (i = 0; i <= maxi; i++) { //Check all clients for data
-            socketfd = clientList[i];
+            socketfd = clientList[i].socket;
             if (socketfd < 0) {
                 continue;
             }
@@ -248,7 +254,7 @@ void mainLoop(int listenfd) {
                     debug("CLIENT CLOSED CONNECTION 1");
                     Close(socketfd);
                     FD_CLR(socketfd, &allset);
-                    clientList[i] = SOCKET_NOT_CONNECTED;
+                    clientList[i].socket = SOCKET_NOT_CONNECTED;
                     message.status = STATUS_LEAVE;
                 }
 
@@ -258,6 +264,10 @@ void mainLoop(int listenfd) {
                         sprintf(message.user, "SERVER");
                         debug("CLIENT JOINED SERVER");
                         repeatMessage(message);
+                        break;
+                    case STATUS_USER_QUERY:
+                        debug("CLIENT REQUESTED USER LIST");
+                        sendUserList(socketfd);
                         break;
                     case STATUS_ONLINE:
                         debug("CLIENT SENDING MESSAGE");
@@ -271,7 +281,7 @@ void mainLoop(int listenfd) {
                             debug("CLIENT LEFT SERVER");
                             Close(socketfd);
                             FD_CLR(socketfd, &allset);
-                            clientList[i] = SOCKET_NOT_CONNECTED;
+                            clientList[i].socket = SOCKET_NOT_CONNECTED;
                         }//END if
                         break;
                     default:
@@ -304,8 +314,8 @@ void repeatMessage(ChatMessage message) {
         //CHILD
         printf("LOG: %s: %s", message.user, message.text);
         for (i = 0; i < MAX_CLIENTS; i++) {
-            if (clientList[i] != SOCKET_NOT_CONNECTED) {
-                write(clientList[i], &message, sizeof (message));
+            if (clientList[i].socket != SOCKET_NOT_CONNECTED) {
+                write(clientList[i].socket, &message, sizeof (message));
             }//END if/else
         }//END for
         exit(1);
@@ -326,4 +336,42 @@ void handleSigTermWithDereg(int signo) {
 }//END handleSigTerm()
 
 //######################################################
+//  Sends a list of users to the client
+//######################################################
+
+void sendUserList(int socketfd) {
+    int childpid;
+
+    childpid = fork();
+    if (childpid == 0) {
+        //CHILD
+        int i;
+
+        ChatMessage message;
+
+        memset(&message, 0, sizeof (message));
+
+        for (i = 0; i < MAX_CLIENTS; i++) {
+            if (clientList[i].name == NULL) {
+                continue;
+            } else {
+                message.status = STATUS_USER_QUERY;
+                strncpy(message.user, "USER LIST", sizeof ("USER LIST"));
+                strncpy(message.text, clientList[i].name, sizeof (message.text));
+                Write(socketfd, &message, sizeof (message));
+            }//END if/else
+        }//END for
+
+        memset(&message, 0, sizeof (message));
+
+        message.status = STATUS_USER_QUERY_COMPLETE;
+        Write(socketfd, &message, sizeof (message));
+
+        exit(1);
+    } else {
+        //PARENT
+        return;
+    }//END if/else
+}//END sendUserList()
+
 

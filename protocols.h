@@ -24,17 +24,19 @@
 #define STATUS_JOIN 0
 #define STATUS_ONLINE 1
 #define STATUS_LEAVE 2
+#define STATUS_USER_QUERY 3
+#define STATUS_USER_QUERY_COMPLETE 4
 
-#define REGISTER_REQUEST 4
-#define REGISTER_LEAVE 5
+#define REGISTER_REQUEST 5
+#define REGISTER_LEAVE 6
 
-#define REGISTER_SUCESS 6
-#define REGISTER_FAILURE 7
-#define REGISTER_FAILURE_NO_MEM 8
-#define REGISTER_FAILURE_NAME_EXISTS 9
+#define REGISTER_SUCESS 7
+#define REGISTER_FAILURE 8
+#define REGISTER_FAILURE_NO_MEM 9
+#define REGISTER_FAILURE_NAME_EXISTS 10
 
-#define ROOM_QUERY 10
-#define ROOM_QUERY_COMPLETE 11
+#define ROOM_QUERY 11
+#define ROOM_QUERY_COMPLETE 12
 
 typedef struct {
     int type; //Must be a valid sock type (e.g. SOCK_STREAM or SOCK_DGRAM)
@@ -58,5 +60,10 @@ typedef struct {
     int status;
     char text[MAX_MESSAGE_TEXT];
 } ChatMessage;
+
+typedef struct {
+    int socket;
+    char name[MAX_USER_ID_LENGTH];
+} ClientRecord;
 
 #endif 
