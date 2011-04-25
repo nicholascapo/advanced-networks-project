@@ -13,7 +13,8 @@
 
 // CONSTANTS ########################################################
 
-#define QUIT_COMMAND "/quit"
+#define COMMAND_QUIT "/quit"
+#define COMMAND_USER_QUERY "/who"
 
 // GLOBALS ##########################################################
 
@@ -174,8 +175,6 @@ void chat(int socketfd, char* username) {
     //PARENT
     userInput(socketfd, username);
 
-    sendStatus(socketfd, username, STATUS_LEAVE);
-
     Kill(pid, SIGTERM);
 
 }//END chat()
@@ -202,24 +201,18 @@ void sendStatus(int socketfd, char* username, int status) {
 
 void userOutput(int socketfd) {
     ChatMessage message;
-    fd_set rset;
-    fd_set allset;
     int n;
-    FD_SET(socketfd, &allset);
 
     while (TRUE) {
-        rset = allset;
-        if (FD_SET(socketfd, &rset)) {
-            n = Read(socketfd, &message, sizeof (message));
-            if (n == 0) { //connection closed by client
-                printf("Server closed Connection: Exiting\n");
-                //We will always detect a remote close here sooner than in the parent,
-                // thus when we catch that here, we send the parent a SIGTERM
-                Kill(getppid(), SIGTERM);
-                break;
-            }
-            printf("%s : %s", message.user, message.text);
+        n = Read(socketfd, &message, sizeof (message));
+        if (n == 0) { //connection closed by client
+            printf("Server closed Connection: Exiting\n");
+            //We will always detect a remote close here sooner than in the parent,
+            // thus when we catch it here, we send the parent a SIGTERM
+            Kill(getppid(), SIGTERM);
+            break;
         }
+        printf("%s : %s", message.user, message.text);
         bzero(&message, sizeof (message));
     }//END while
 
@@ -234,21 +227,26 @@ void userInput(int socketfd, char* username) {
     char text[MAX_MESSAGE_TEXT];
 
     while (TRUE) {
+        bzero(&text, sizeof (text));
         strncpy(message.user, username, MAX_USER_ID_LENGTH);
         message.status = STATUS_ONLINE;
 
         fgets(text, MAX_MESSAGE_TEXT, stdin);
 
-
-        if (strncmp(text, QUIT_COMMAND, sizeof (QUIT_COMMAND)) == 0) {
+        if (strncmp(text, COMMAND_QUIT, sizeof (COMMAND_QUIT - 1)) == 0) {
             debug("Got Quit Command");
+            sendStatus(socketfd, username, STATUS_LEAVE);
             break;
-        }//END if
-        sprintf(message.text, "%s", text);
-        //strncpy(message.text, text, MAX_MESSAGE_TEXT);
+        } else if (strncmp(text, COMMAND_USER_QUERY, sizeof (COMMAND_USER_QUERY - 1)) == 0) {
+            printf("USER QUERY\n");
+            message.status = STATUS_USER_QUERY;
+        } else {
+            //sprintf(message.text, "%s", text);
+            strncpy(message.text, text, MAX_MESSAGE_TEXT);
+        }//END if/else
 
         Write(socketfd, &message, sizeof (message));
-        bzero(&text, sizeof (text));
+
 
     }//END while
 
