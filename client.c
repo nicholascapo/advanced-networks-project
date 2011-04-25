@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     Close(socketfd);
 
     room = roomList[getRoomChoice(roomList, roomCount)];
-
+    
     //make a connection to the Room Server
     socketfd = makeConnection(room.type, room.address, room.port);
 
