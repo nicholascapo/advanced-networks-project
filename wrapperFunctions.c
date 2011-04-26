@@ -92,9 +92,11 @@ void SigAction(int signum, Sigfunc* handler) {
 
 void Close(int socket) {
     int status;
+
+    debug("Close");
+
     socketList[socket] = SOCKET_NOT_CONNECTED;
     status = close(socket);
-    debug("Close");
     if (status < 0) {
         perror("Close Error");
         //NOT CLEANUP() SINCE CLEANUP() CALLS CLOSE()
@@ -361,6 +363,9 @@ int Connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
 void cleanup() {
     int i;
+
+    debug("CLEANUP");
+
     //start at index 3 so as not to close stdin, stdout, and stderr
     for (i = 3; i < MAX_SOCKETS; i++) {
         if (socketList[i] == SOCKET_NOT_CONNECTED) {
@@ -473,6 +478,10 @@ int makeConnection(int sockType, char* ipAddress, int port) {
     int status;
     struct sockaddr_in serverAddress;
 
+    if (DEBUG) {
+        printf("DEBUG: makeConnection: Address: %s, Port: %d, Type: %d\n", ipAddress, port, sockType);
+    }//END if
+
     bzero(&serverAddress, sizeof (serverAddress));
 
     //Setup Server Address
@@ -482,14 +491,14 @@ int makeConnection(int sockType, char* ipAddress, int port) {
     if (status != 1) {
         printf("Unable to resolve server IP");
         cleanup();
-    }
+    }//END if
 
     socketfd = Socket(AF_INET, sockType, 0);
 
     Connect(socketfd, (struct sockaddr *) & serverAddress, sizeof (serverAddress));
 
     return socketfd;
-}//end makeconnection
+}//end makeconnection()
 
 //#############################################################################
 
@@ -528,5 +537,83 @@ void useStandardSignalHandlers() {
     SigAction(SIGPIPE, handleSigPipe);
 }//END registerStandardHandlers()
 
+//#############################################################################
+
+ssize_t Recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen) {
+    int size;
+
+    debug("Recvfrom");
+
+    while (TRUE) {
+        size = recvfrom(sockfd, buf, len, flags, src_addr, addrlen);
+        if (errno == EINTR) {
+            continue;
+        } else {
+            break;
+        }//END if/else
+    }//END while
+
+    if (errno == EPIPE) {
+        printf("Caught EPIPE: Exiting\n");
+        cleanup();
+    } else if (errno == ETIMEDOUT) {
+        printf("Caught ETIMEDOUT: Exiting\n");
+        cleanup();
+    } else if (errno == EHOSTUNREACH) {
+        printf("Caught EHOSTUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ENETUNREACH) {
+        printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ECONNRESET) {
+        printf("Caught ECONNRESET: Exiting\n");
+        cleanup();
+    } else if (size < 0) {
+        perror("Recvfrom Error");
+        cleanup();
+    }//END if/else
+
+    return size;
+
+}//END Recvfrom()
+
 
 //#############################################################################
+
+ssize_t Sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
+    int size;
+
+    debug("Sendto");
+
+    while (TRUE) {
+        size = sendto(sockfd, buf, len, flags, dest_addr, addrlen);
+        if (errno == EINTR) {
+            continue;
+        } else {
+            break;
+        }//END if/else
+    }//END while
+
+    if (errno == EPIPE) {
+        printf("Caught EPIPE: Exiting\n");
+        cleanup();
+    } else if (errno == ETIMEDOUT) {
+        printf("Caught ETIMEDOUT: Exiting\n");
+        cleanup();
+    } else if (errno == EHOSTUNREACH) {
+        printf("Caught EHOSTUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ENETUNREACH) {
+        printf("Caught ENETUNREACH: Exiting\n");
+        cleanup();
+    } else if (errno == ECONNRESET) {
+        printf("Caught ECONNRESET: Exiting\n");
+        cleanup();
+    } else if (size < 0) {
+        perror("Sendto Error");
+        cleanup();
+    }//END if/else
+
+    return size;
+
+}//END Sendto()
