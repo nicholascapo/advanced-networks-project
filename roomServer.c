@@ -174,8 +174,8 @@ void mainLoop(int listenfd) {
     int nready;
     fd_set rset;
     fd_set allset;
-    socklen_t clientLength;
     struct sockaddr_in clientAddress;
+    socklen_t clientLength = sizeof (clientAddress);
     ssize_t n;
     int maxfd = listenfd;
     int maxi = -1;
@@ -207,17 +207,48 @@ void mainLoop(int listenfd) {
 
         debug("ISSET listenfd");
         if (FD_ISSET(listenfd, &rset)) {//check for new client connection
-            clientLength = sizeof (clientAddress);
+
             if (roomType == SOCK_STREAM) {
                 clientfd = accept(listenfd, (SA*) & clientAddress, &clientLength);
             } else {
-                //readfrom to get RoomRecord
-                //Socket to create socket
-                // Connect to "bind" it to the client address
+                struct sockaddr_in socket_addr;
+                socklen_t client_addr_size = sizeof (clientAddress);
+                socklen_t socket_addr_size = sizeof (socket_addr_size);
+                RoomRecord tempRoom;
+
+
+                if (DEBUG) {
+                    printf("UDP Message on listenfd\n");
+                }//END if
+
+                memset(&clientAddress, 0, sizeof (clientAddress));
+                memset(&tempRoom, 0, sizeof (tempRoom));
+
+                //recvfrom() to get ClientRecord
+                Recvfrom(listenfd, &message, sizeof (message), 0, (struct sockaddr *) &clientAddress, &client_addr_size);
+
+                clientfd = Socket(AF_INET, roomType, 0);
+
+                // Connect to "bind" it to the client address (allows Read() and Write())
+                Connect(clientfd, (struct sockaddr *) &clientAddress, client_addr_size);
+
+                //Get ephemeral port number and create temp room record
+                Getsockname(clientfd, (struct sockaddr *) &socket_addr, &socket_addr_size);
+                strncpy(tempRoom.name, roomName, sizeof (tempRoom.name));
+                tempRoom.port = ntohs(socket_addr.sin_port);
+
+                if (DEBUG) {
+                    printf("Listenfd Port: %d\n", roomPort);
+                    printf("New Clientfd Port: %d\n", tempRoom.port);
+                }//END if
+
+                //update client with ephemeral port number
+                Sendto(listenfd, &tempRoom, sizeof (tempRoom), 0, (struct sockaddr *) &clientAddress, clientLength);
+                //Write(clientfd, &tempRoom, sizeof (tempRoom));
 
             }//END if/else
 
-            //If there is a new client
+            //store clientfd in the first available index
             for (i = 0; i < MAX_CLIENTS; i++) {
                 if (clientList[i].socket == SOCKET_NOT_CONNECTED) { //store FD in the next available
                     ClientRecord c;
@@ -227,20 +258,25 @@ void mainLoop(int listenfd) {
                     break; //break for loop
                 }//END IF
             }//END FOR
+
             if (i == MAX_CLIENTS) {
                 printf("Server is full, cannot connect another\n");
             }//END IF
+
             if (i > maxi) {
                 maxi = i; //max index in client[]
             }
+
             FD_SET(clientfd, &allset); //add FD to set
+
             if (clientfd > maxfd) {
                 maxfd = clientfd; //for select
             }
+
             if (--nready <= 0) {
                 continue; //no more readable FDs
             }
-        }
+        }//END if ISSET listenfd
 
         for (i = 0; i <= maxi; i++) { //Check all clients for data
             socketfd = clientList[i].socket;
