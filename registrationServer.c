@@ -96,7 +96,7 @@ void processConnections(int listenfd) {
         Read(connfd, &request, sizeof (request));
 
         if (DEBUG) {
-            printf("Read Request: %d, %s, %s, %d\n", request.type, request.record.name, request.record.address, request.record.port);
+            printf("Read Request: %d, %s\n", request.type, request.record.name);
         }
 
         if (request.type == ROOM_QUERY) {
