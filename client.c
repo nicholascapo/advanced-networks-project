@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
     int roomCount;
     RoomRecord roomList[MAX_ROOMS];
     RoomRecord room;
+    RoomRecord tempRoom;
 
     //Check Argc for correct requirements
     checkArgc(argc);
@@ -50,6 +51,8 @@ int main(int argc, char* argv[]) {
     port = atoi(argv[2]);
     username = argv[3];
 
+    memset(&room, 0, sizeof (room));
+
     //make a TCP connection to the registration server
     socketfd = makeConnection(SOCK_STREAM, ipAddr, port);
 
@@ -58,9 +61,31 @@ int main(int argc, char* argv[]) {
     Close(socketfd);
 
     room = roomList[getRoomChoice(roomList, roomCount)];
-    
+
     //make a connection to the Room Server
     socketfd = makeConnection(room.type, room.address, room.port);
+
+    sendStatus(socketfd, username, STATUS_JOIN);
+
+    //If UDP, get the ephemeral port number from the server
+    if (room.type == SOCK_DGRAM) {
+
+        if (DEBUG) {
+            printf("Server Listen Port Number: %d\n", room.port);
+        }//END if
+
+        Read(socketfd, &tempRoom, sizeof (room));
+        room.port = tempRoom.port;
+        Close(socketfd);
+
+        if (DEBUG) {
+            printf("Server Connection Port Number: %d\n", room.port);
+        }//END if
+
+        socketfd = makeConnection(room.type, room.address, room.port);
+
+
+    }//END if
 
     chat(socketfd, username);
 
@@ -159,8 +184,6 @@ int getRoomChoice(const RoomRecord* roomList, int roomCount) {
 
 void chat(int socketfd, char* username) {
     int pid;
-
-    sendStatus(socketfd, username, STATUS_JOIN);
 
     pid = Fork();
 
