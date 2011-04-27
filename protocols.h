@@ -77,8 +77,11 @@ typedef struct {
 } ChatMessage;
 
 typedef struct {
-    int socket;
-    char name[MAX_USER_ID_LENGTH];
+    int valid;
+    int socket; //Only used in TCP Room Server
+    char name[MAX_USER_ID_LENGTH]; //used in both TCP and UDP
+    char address[INET_ADDRSTRLEN]; //Only used in UDP Room Server
+    int port; //Only used in UDP Room Server
 } ClientRecord;
 
 #endif 
