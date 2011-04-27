@@ -47,6 +47,7 @@ void notifyRegServer(int message);
 int createConnection(char* argv[]);
 struct sockaddr_in setupAddress();
 void handleSigTermWithDereg(int signo);
+void handleSigIntWithDereg(int signo);
 void sendUserList(int socketfd);
 void udpMainLoop(int listenfd);
 void repeatMessageUDP(ChatMessage message, int socket);
@@ -62,6 +63,7 @@ int main(int argc, char* argv[]) {
     checkArgc(argc);
 
     SigAction(SIGTERM, handleSigTermWithDereg);
+    SigAction(SIGINT, handleSigIntWithDereg);
     SigAction(SIGCHLD, handleSigChld);
     SigAction(SIGPIPE, handleSigPipe);
 
@@ -466,11 +468,20 @@ void repeatMessageUDP(ChatMessage message, int socket) {
 //#######################################################
 
 void handleSigTermWithDereg(int signo) {
-
     printf("Caught SIGTERM: Exiting\n");
     notifyRegServer(REGISTER_LEAVE);
     cleanup();
 }//END handleSigTerm()
+
+//#######################################################
+//  Handles SIGINT and de-registers the Room
+//#######################################################
+
+void handleSigIntWithDereg(int signo) {
+    printf("Caught SIGINT: Exiting\n");
+    notifyRegServer(REGISTER_LEAVE);
+    cleanup();
+}//END handleSigIntWithDereg()
 
 //######################################################
 //  Sends a list of users to the client
